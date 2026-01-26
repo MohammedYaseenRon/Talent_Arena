@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    // "rootDir": "./src",
     "outDir": "./dist",
 
     "module": "nodenext",
@@ -17,6 +16,9 @@
     "strict": true,
     "verbatimModuleSyntax": false,
     "isolatedModules": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   }
 }
