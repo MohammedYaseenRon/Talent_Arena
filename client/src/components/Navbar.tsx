@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { ModeToggle } from "./Darkmode";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface NavTypes {
   title: string;
@@ -21,6 +22,7 @@ const navItems: NavTypes[] = [
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const router = useRouter();
   return (
     <nav className="fixed top-0 right-0 left-0 z-50 backdrop-blur-sm transform transition-transform duration-300 ease-out">
       <div className="flex w-full items-center justify-between px-10 py-6 md:px-12">
@@ -51,10 +53,11 @@ const Navbar = () => {
           <div className="hidden lg:flex items-center gap-2">
             <Bell className="w-4 h-4" />
             <ModeToggle />
-            <Avatar>
+            {/* <Avatar>
               <AvatarImage src="https://github.com/shadcn.png" />
               <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
+            </Avatar> */}
+            <Link href="/auth/login"><Button className="text-base bg-orange-600 shadow-lg dark:text-white hover:bg-orange-600 rounded-lg">Login</Button></Link>
             <Button className="text-base rounded-lg">Premium</Button>
           </div>
           <div>
