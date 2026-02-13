@@ -13,7 +13,7 @@ import {
   userRoleEnum,
 } from "../db/schema.js";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// const resend = new Resend(process.env.RESEND_API_KEY);
 
 type Role = (typeof userRoleEnum.enumValues)[number];
 
@@ -67,16 +67,24 @@ export const registration = async (req: Request, res: Response) => {
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none", // important for cross-origin
+      maxAge: 15 * 60 * 1000, // 15 min
+      path: "/",
+    });
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/api/auth",
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: "/api/auth", // limit scope
     });
 
     return res.status(201).json({
       message: "User created successfully",
-      accessToken,
       user: {
         id: user.id,
         name: user.name,
@@ -93,10 +101,7 @@ export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email));
+    const [user] = await db.select().from(users).where(eq(users.email, email));
 
     if (!user) {
       return res.status(401).json({ error: "Invalid credentials" });
@@ -116,16 +121,24 @@ export const login = async (req: Request, res: Response) => {
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none", // important for cross-origin
+      maxAge: 15 * 60 * 1000, // 15 min
+      path: "/",
+    });
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/api/auth",
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: "/api/auth", // limit scope
     });
 
     return res.status(200).json({
       message: "Login successful",
-      accessToken,
       user: {
         id: user.id,
         email: user.email,
@@ -161,7 +174,7 @@ export const logout = async (req: Request, res: Response) => {
   }
 };
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+// const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const refreshTokenHandler = async (req: Request, res: Response) => {
   try {
@@ -194,7 +207,7 @@ export const refreshTokenHandler = async (req: Request, res: Response) => {
 
     const newAccessToken = generateAccessToken(
       tokenRecord.userId,
-      tokenRecord.userRole
+      tokenRecord.userRole,
     );
 
     return res.status(200).json({
@@ -209,69 +222,66 @@ export const refreshTokenHandler = async (req: Request, res: Response) => {
   }
 };
 
-export const requestPasswordReset = async (req: Request, res: Response) => {
-  try {
-    const { email } = req.body;
+// export const requestPasswordReset = async (req: Request, res: Response) => {
+//   try {
+//     const { email } = req.body;
 
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email));
+//     const [user] = await db.select().from(users).where(eq(users.email, email));
 
-    if (!user) {
-      return res.status(200).json({
-        message:
-          "If an account exists with that email, a password reset link has been sent",
-      });
-    }
+//     if (!user) {
+//       return res.status(200).json({
+//         message:
+//           "If an account exists with that email, a password reset link has been sent",
+//       });
+//     }
 
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
+//     const resetToken = crypto.randomBytes(32).toString("hex");
+//     const hashedToken = crypto
+//       .createHash("sha256")
+//       .update(resetToken)
+//       .digest("hex");
 
-    await db.delete(passwordResets).where(eq(passwordResets.email, email));
+//     await db.delete(passwordResets).where(eq(passwordResets.email, email));
 
-    await db.insert(passwordResets).values({
-      email,
-      token: hashedToken,
-      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
-    });
+//     await db.insert(passwordResets).values({
+//       email,
+//       token: hashedToken,
+//       expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+//     });
 
-    const resetUrl = `${process.env.FRONTEND_URL}/reset?token=${resetToken}`;
-    const { data, error } = await resend.emails.send({
-      from: "OneGod <onboarding@resend.dev>",
-      to: [email],
-      subject: "Password Reset Request",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Password Reset Request</h2>
-          <p>You requested to reset your password. Click the button below to reset it:</p>
-          <a href="${resetUrl}" 
-             style="display: inline-block; background-color: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 20px 0;">
-            Reset Password
-          </a>
-          <p>Or copy and paste this link into your browser:</p>
-          <p style="color: #666; word-break: break-all;">${resetUrl}</p>
-          <p style="color: #999; font-size: 14px;">This link will expire in 1 hour.</p>
-          <p style="color: #999; font-size: 14px;">If you didn't request this, please ignore this email.</p>
-        </div>
-      `,
-    });
-    if (error) {
-      console.error("Email send error:", error);
-      return res.status(500).json({ error: "Failed to send reset email" });
-    }
-    return res.status(200).json({
-      message:
-        "If an account exists with that email, a password reset link has been sent",
-    });
-  } catch (error) {
-    console.error("PASSWORD RESET REQUEST ERROR:", error);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-};
+//     const resetUrl = `${process.env.FRONTEND_URL}/reset?token=${resetToken}`;
+//     const { data, error } = await resend.emails.send({
+//       from: "OneGod <onboarding@resend.dev>",
+//       to: [email],
+//       subject: "Password Reset Request",
+//       html: `
+//         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+//           <h2>Password Reset Request</h2>
+//           <p>You requested to reset your password. Click the button below to reset it:</p>
+//           <a href="${resetUrl}" 
+//              style="display: inline-block; background-color: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 20px 0;">
+//             Reset Password
+//           </a>
+//           <p>Or copy and paste this link into your browser:</p>
+//           <p style="color: #666; word-break: break-all;">${resetUrl}</p>
+//           <p style="color: #999; font-size: 14px;">This link will expire in 1 hour.</p>
+//           <p style="color: #999; font-size: 14px;">If you didn't request this, please ignore this email.</p>
+//         </div>
+//       `,
+//     });
+//     if (error) {
+//       console.error("Email send error:", error);
+//       return res.status(500).json({ error: "Failed to send reset email" });
+//     }
+//     return res.status(200).json({
+//       message:
+//         "If an account exists with that email, a password reset link has been sent",
+//     });
+//   } catch (error) {
+//     console.error("PASSWORD RESET REQUEST ERROR:", error);
+//     return res.status(500).json({ error: "Internal server error" });
+//   }
+// };
 
 export const verifyResetToken = async (req: Request, res: Response) => {
   try {
