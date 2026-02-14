@@ -7,12 +7,36 @@ import {
   pgEnum,
   integer,
   boolean,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { table } from "node:console";
 
-export const userRoleEnum = pgEnum("user_role", [
-  "USER",
-  "RECRUITER",
-  "ADMIN",
+export const userRoleEnum = pgEnum("user_role", ["USER", "RECRUITER", "ADMIN"]);
+export const challengeDifficultyEnum = pgEnum("challenge_difficulty", [
+  "EASY",
+  "MEDIUM",
+  "HARD",
+]);
+
+export const challengeTypeEnum = pgEnum("challenge_type", [
+  "FRONTEND",
+  "BACKEND",
+  "DSA",
+  "SYSTEM_DESIGN",
+]);
+
+export const submissionStatusEnum = pgEnum("submission_status", [
+  "PENDING",
+  "AC",
+  "WA",
+  "TLE",
+  "RE",
+]);
+
+export const sessionStatusEnum = pgEnum("session_status", [
+  "SCHEDULED",
+  "LIVE",
+  "ENDED",
 ]);
 
 export const users = pgTable("users", {
@@ -45,9 +69,48 @@ export const recruiterProfiles = pgTable("recruiter_profiles", {
 export const challenges = pgTable("challenges", {
   id: uuid("id").defaultRandom().primaryKey(),
   title: varchar("title", { length: 200 }).notNull(),
-  difficulty: varchar("difficulty", { length: 20 }).notNull(), // easy / medium / hard
-  problemStatement: text("problem_statement").notNull(),
-  timeLimit: varchar("time_limit", { length: 20 }),
+  description: text("description"),
+  challengeType: challengeTypeEnum("challenge_type").notNull(),
+  difficulty: challengeDifficultyEnum("difficulty").notNull(), // easy / medium / hard
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const problems = pgTable("problems", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  title: varchar("title", { length: 200 }).notNull(),
+  statement: text("statement").notNull(),
+  problemType: challengeTypeEnum("problem_type").notNull(),
+  difficulty: challengeDifficultyEnum("difficulty").notNull(),
+  timeLimitMs: integer("time_limit_ms"),
+  memoryLimitMb: integer("memory_limit_mb"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const challengeProblems = pgTable("challenge_problems", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  challengeId: uuid("challenge_id")
+    .notNull()
+    .references(() => challenges.id, { onDelete: "cascade" }),
+  problemId: uuid("problem_id")
+    .notNull()
+    .references(() => problems.id, { onDelete: "cascade" }),
+  orderIndex: integer("order_index").notNull(),
+  score: integer("score").default(0),
+});
+
+export const testCases = pgTable("test_cases", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  problemId: uuid("problem_id")
+    .notNull()
+    .references(() => problems.id, { onDelete: "cascade" }),
+  input: text("input").notNull(),
+  expectedOutput: text("expected_output").notNull(),
+  isSample: boolean("is_sample").default(false),
+  isHidden: boolean("is_hidden").default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -56,38 +119,52 @@ export const challengeSessions = pgTable("challenge_sessions", {
   challengeId: uuid("challenge_id")
     .notNull()
     .references(() => challenges.id, { onDelete: "cascade" }),
-  recruiterId: uuid("recruiter_id")
-    .notNull()
-    .references(() => users.id),
   startTime: timestamp("start_time").notNull(),
-  endTime: timestamp("end_time"),
-  isLive: boolean("is_live").default(false),
+  endTime: timestamp("end_time").notNull(),
+  status: sessionStatusEnum("status").default("SCHEDULED").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const sessionParticipants = pgTable("session_participants", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  sessionId: uuid("session_id")
-    .notNull()
-    .references(() => challengeSessions.id, { onDelete: "cascade" }),
-  candidateId: uuid("candidate_id")
-    .notNull()
-    .references(() => users.id),
-  joinedAt: timestamp("joined_at").defaultNow().notNull(),
-});
+export const sessionParticipants = pgTable(
+  "session_participants",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => challengeSessions.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    startedAt: timestamp("started_at"),
+    finishedAt: timestamp("finished_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    uniqSessionUser: uniqueIndex("uniq_session_user").on(
+      table.sessionId,
+      table.userId,
+    ),
+  }),
+);
 
 export const submissions = pgTable("submissions", {
   id: uuid("id").defaultRandom().primaryKey(),
   sessionId: uuid("session_id")
     .notNull()
     .references(() => challengeSessions.id, { onDelete: "cascade" }),
-  candidateId: uuid("candidate_id")
+  userId: uuid("user_id")
     .notNull()
-    .references(() => users.id),
+    .references(() => users.id, { onDelete: "cascade" }),
+  problemId: uuid("problem_id")
+    .notNull()
+    .references(() => problems.id, { onDelete: "cascade" }),
   language: varchar("language", { length: 30 }).notNull(),
   code: text("code").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  status: submissionStatusEnum("status").default("PENDING").notNull(),
+  runTimeMs: integer("runtime_ms"),
+  memoryMb: integer("memory_mb"),
+  submittedAt: timestamp("submitted_at").defaultNow().notNull(),
 });
-
 
 export const refreshTokens = pgTable("refresh_tokens", {
   id: uuid("id").defaultRandom().primaryKey(),
