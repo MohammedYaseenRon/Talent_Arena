@@ -9,8 +9,6 @@ import {
   boolean,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { table } from "node:console";
-
 export const userRoleEnum = pgEnum("user_role", ["USER", "RECRUITER", "ADMIN"]);
 export const challengeDifficultyEnum = pgEnum("challenge_difficulty", [
   "EASY",
@@ -102,6 +100,21 @@ export const challengeProblems = pgTable("challenge_problems", {
   score: integer("score").default(0),
 });
 
+export const frontendChallenges = pgTable("challenge_frontend", {
+  challengeId: uuid("challenge_id")
+    .primaryKey()
+    .references(() => challenges.id, { onDelete: "cascade" }),
+
+  taskDescription: text("task_description").notNull(),
+  features: text("features"),
+  optionalRequirements: text("optional_requirements"),
+  apiDetails: text("api_details"),
+  designReference: varchar("design_reference", { length: 500 }),
+  submissionInstructions: text("submission_instructions").notNull(),
+  techConstraints: text("tech_constraints"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const testCases = pgTable("test_cases", {
   id: uuid("id").defaultRandom().primaryKey(),
   problemId: uuid("problem_id")
@@ -154,13 +167,15 @@ export const submissions = pgTable("submissions", {
     .references(() => challengeSessions.id, { onDelete: "cascade" }),
   userId: uuid("user_id")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => users.id, { onDelete: "cascade" }), 
   problemId: uuid("problem_id")
-    .notNull()
-    .references(() => problems.id, { onDelete: "cascade" }),
+    .references(() => problems.id, { onDelete: "cascade" }),  
+  challengeId: uuid("challenge_id")
+    .references(() => challenges.id, { onDelete: "cascade" }),  
   language: varchar("language", { length: 30 }).notNull(),
   code: text("code").notNull(),
   status: submissionStatusEnum("status").default("PENDING").notNull(),
+  autoSubmitted: boolean("auto_submitted").default(false),  
   runTimeMs: integer("runtime_ms"),
   memoryMb: integer("memory_mb"),
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),

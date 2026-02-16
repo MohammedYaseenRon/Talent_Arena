@@ -54,8 +54,6 @@ export const scheduleChallenge = async (req: Request, res: Response) => {
         .status(400)
         .json({ error: "Challenge ID, start and end times required" });
     }
-
-    // Validate times
     const start = new Date(startTime);
     const end = new Date(endTime);
 
