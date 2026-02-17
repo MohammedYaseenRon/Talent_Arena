@@ -25,7 +25,7 @@ const Navbar = () => {
   const router = useRouter();
   return (
     <nav className="fixed top-0 right-0 left-0 z-50 backdrop-blur-sm transform transition-transform duration-300 ease-out">
-      <div className="flex w-full items-center justify-between px-10 py-6 md:px-12">
+      <div className="flex w-full items-center justify-between px-10 md:px-12">
         <div className="flex items-center gap-8">
           <h1 className="text-2xl font-semibold mb-1">BeatMe</h1>
           <ul className="hidden lg:flex items-start gap-4">
