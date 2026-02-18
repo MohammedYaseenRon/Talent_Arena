@@ -1,9 +1,7 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { Resend } from "resend";
 import crypto from "crypto";
-import { OAuth2Client } from "google-auth-library";
 import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import {
@@ -11,6 +9,7 @@ import {
   refreshTokens,
   passwordResets,
   userRoleEnum,
+  recruiterProfiles,
 } from "../db/schema.js";
 
 // const resend = new Resend(process.env.RESEND_API_KEY);
@@ -32,6 +31,12 @@ const generateRefreshToken = (userId: string) => {
 export const registration = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res
+        .status(400)
+        .json({ error: "Name, email, and password are required" });
+    }
 
     const [existingUser] = await db
       .select()
@@ -97,6 +102,130 @@ export const registration = async (req: Request, res: Response) => {
   }
 };
 
+export const recruiterRegistration = async (req: Request, res: Response) => {
+  try {
+    const { name, email, password, companyName, designation, companyWebsite } =
+      req.body;
+
+    if (!name || !email || !password || !companyName) {
+      return res.status(400).json({
+        error: "Name, email, password, and companyName are required",
+      });
+    }
+
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email));
+
+    if (existingUser) {
+      return res.status(409).json({ error: "User already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const result = await db.transaction(async (tx) => {
+      const [newUser] = await tx
+        .insert(users)
+        .values({
+          name,
+          email,
+          password: hashedPassword,
+          role: "RECRUITER",
+        })
+        .returning();
+
+      if (!newUser) {
+        throw new Error("Failed to create recruiter");
+      }
+      const [recruiterProfile] = await tx
+        .insert(recruiterProfiles)
+        .values({
+          userId: newUser.id,
+          companyName,
+          designation: designation || null,
+          companyWebsite: companyWebsite || null,
+        })
+        .returning();
+
+      if (!recruiterProfile) {
+        throw new Error("Failed to create recruiter profile");
+      }
+
+      return {
+        user: newUser,
+        recruiterProfile,
+      };
+    });
+
+    const { user, recruiterProfile } = result;
+
+    const accessToken = generateAccessToken(user.id, user.role);
+    const refreshToken = generateRefreshToken(user.id);
+
+    await db.insert(refreshTokens).values({
+      token: refreshToken,
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      maxAge: 15 * 60 * 1000,
+      path: "/",
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: "/api/auth",
+    });
+
+    return res.status(201).json({
+      message: "Recruiter created successfully",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      recruiterProfile: {
+        companyName: recruiterProfile.companyName,
+        designation: recruiterProfile.designation,
+        companyWebsite: recruiterProfile.companyWebsite,
+      },
+    });
+  } catch (error) {
+    console.error("RECRUITER REGISTRATION ERROR:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const listRecruiterProfiles = async (req: Request, res: Response) => {
+  try {
+    const profiles = await db
+      .select({
+        userId: recruiterProfiles.userId,
+        companyName: recruiterProfiles.companyName,
+        designation: recruiterProfiles.designation,
+        companyWebsite: recruiterProfiles.companyWebsite,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+      })
+      .from(recruiterProfiles)
+      .innerJoin(users, eq(recruiterProfiles.userId, users.id));
+
+    return res.status(200).json({ profiles });
+  } catch (error) {
+    console.error("LIST RECRUITER PROFILES ERROR:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -258,7 +387,7 @@ export const refreshTokenHandler = async (req: Request, res: Response) => {
 //         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
 //           <h2>Password Reset Request</h2>
 //           <p>You requested to reset your password. Click the button below to reset it:</p>
-//           <a href="${resetUrl}" 
+//           <a href="${resetUrl}"
 //              style="display: inline-block; background-color: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin: 20px 0;">
 //             Reset Password
 //           </a>

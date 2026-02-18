@@ -8,6 +8,7 @@ import {
   integer,
   boolean,
   uniqueIndex,
+  jsonb,
 } from "drizzle-orm/pg-core";
 export const userRoleEnum = pgEnum("user_role", ["USER", "RECRUITER", "ADMIN"]);
 export const challengeDifficultyEnum = pgEnum("challenge_difficulty", [
@@ -73,6 +74,7 @@ export const challenges = pgTable("challenges", {
   createdBy: uuid("created_by")
     .notNull()
     .references(() => users.id),
+  isDraft: boolean("is_draft").default(true).notNull(), 
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -112,6 +114,9 @@ export const frontendChallenges = pgTable("challenge_frontend", {
   designReference: varchar("design_reference", { length: 500 }),
   submissionInstructions: text("submission_instructions").notNull(),
   techConstraints: text("tech_constraints"),
+  starterCode: text("starter_code"),
+  solutionTemplate: text("solution_template"),
+  allowedLanguages: jsonb("allowed_languages").$type<string[]>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
