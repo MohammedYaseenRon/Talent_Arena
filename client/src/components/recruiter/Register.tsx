@@ -8,18 +8,31 @@ import { Eye, EyeOff, Swords, Shield, Trophy, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context'/authContext";
 
-export default function SignupPage() {
+interface FormData {
+    name: string,
+    email: string,
+    password: string,
+    confirmPassword: string,
+    companyName: string,
+    desigNation?: string,
+    companyWebsite?: string
+}
+
+export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
+    companyName: "",
+    desigNation: "",
+    companyWebsite: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { register } = useAuth();
+  const { recruiterRegister } = useAuth();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -37,10 +50,13 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      await register({
+      await recruiterRegister({
         name: formData.name,
         email: formData.email,
         password: formData.password,
+        companyName: formData.companyName,
+        desigNation: formData.desigNation || "",
+        companyWebsite: formData.companyWebsite || ""
       });
       router.push("/challenges");
     } catch (err: any) {
@@ -77,7 +93,7 @@ export default function SignupPage() {
         />
       </div>
 
-      <div className="w-full max-w-md relative z-10">
+      <div className="w-full max-w-lg relative z-10">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 blur-xl rounded-2xl"></div>
 
         <div className="relative bg-slate-950/60 backdrop-blur-xl border border-purple-500/20 rounded-2xl p-8 shadow-2xl">
@@ -90,7 +106,7 @@ export default function SignupPage() {
               JOIN THE ARENA
             </h1> */}
             <p className="text-slate-400 text-sm font-mono">
-              Create your warrior profile and start conquering challenges
+              Create your profile and start hiring
             </p>
           </div>
 
@@ -104,7 +120,7 @@ export default function SignupPage() {
 
             <div className="space-y-2">
               <label className="text-sm font-bold text-purple-300 uppercase tracking-wider font-mono">
-                Warrior Name
+                Full Name <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
@@ -118,67 +134,120 @@ export default function SignupPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-purple-300 uppercase tracking-wider font-mono">
-                Email Address
-              </label>
-              <Input
-                type="email"
-                placeholder="warrior@arena.com"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                required
-                className="bg-slate-900/50 border-purple-500/30 focus:border-purple-500 text-white placeholder:text-slate-500 h-11 font-mono"
-              />
+            <div className="flex items-center gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-purple-300 uppercase tracking-wider font-mono">
+                  Email Address <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="email"
+                  placeholder="warrior@arena.com"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  required
+                  className="bg-slate-900/50 border-purple-500/30 focus:border-purple-500 text-white placeholder:text-slate-500 h-11 font-mono"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-purple-300 uppercase tracking-wider font-mono">
+                  Company Name <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Enter your Company name"
+                  value={formData.companyName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, companyName: e.target.value })
+                  }
+                  required
+                  className="bg-slate-900/50 border-purple-500/30 focus:border-purple-500 text-white placeholder:text-slate-500 h-11 font-mono"
+                />
+              </div>
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2 w-full">
+                <label className="text-sm font-bold text-purple-300 uppercase tracking-wider font-mono">
+                  Password <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    required
+                    className="bg-slate-900/50 border-purple-500/30 focus:border-purple-500 text-white placeholder:text-slate-500 h-11 pr-10 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-400 transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-purple-300 uppercase tracking-wider font-mono">
-                Password
-              </label>
-              <div className="relative">
+              <div className="space-y-2 w-full">
+                <label className="text-sm font-bold text-purple-300 uppercase tracking-wider font-mono">
+                  Confirm Password <span className="text-red-500">*</span>
+                </label>
                 <Input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  value={formData.password}
+                  value={formData.confirmPassword}
                   onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
+                    setFormData({
+                      ...formData,
+                      confirmPassword: e.target.value,
+                    })
                   }
                   required
-                  className="bg-slate-900/50 border-purple-500/30 focus:border-purple-500 text-white placeholder:text-slate-500 h-11 pr-10 font-mono"
+                  className="bg-slate-900/50 border-purple-500/30 focus:border-purple-500 text-white placeholder:text-slate-500 h-11 font-mono"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-400 transition-colors"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-purple-300 uppercase tracking-wider font-mono">
-                Confirm Password
-              </label>
-              <Input
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                value={formData.confirmPassword}
-                onChange={(e) =>
-                  setFormData({ ...formData, confirmPassword: e.target.value })
-                }
-                required
-                className="bg-slate-900/50 border-purple-500/30 focus:border-purple-500 text-white placeholder:text-slate-500 h-11 font-mono"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2 w-full">
+                <label className="text-sm font-bold text-purple-300 uppercase tracking-wider font-mono">
+                  Company Website
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Enter your Company website"
+                  value={formData.companyWebsite}
+                  onChange={(e) =>
+                    setFormData({ ...formData, companyWebsite: e.target.value })
+                  }
+                  required
+                  className="bg-slate-900/50 border-purple-500/30 focus:border-purple-500 text-white placeholder:text-slate-500 h-11 font-mono"
+                />
+              </div>
+              <div className="space-y-2 w-full">
+                <label className="text-sm font-bold text-purple-300 uppercase tracking-wider font-mono">
+                  Designation
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Enter your Designation"
+                  value={formData.desigNation}
+                  onChange={(e) =>
+                    setFormData({ ...formData, desigNation: e.target.value })
+                  }
+                  required
+                  className="bg-slate-900/50 border-purple-500/30 focus:border-purple-500 text-white placeholder:text-slate-500 h-11 font-mono"
+                />
+              </div>
             </div>
-
             <Button
               type="submit"
               disabled={loading}

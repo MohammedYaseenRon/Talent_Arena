@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Eye, EyeOff, Swords, Shield, Trophy, Zap, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context'/authContext";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -16,25 +17,14 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const {login} = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     try {
-      const res = await fetch("http://localhost:4000/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(formData),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Login failed");
-      }
+      await login(formData.email, formData.password);
       router.push("/challenge");
     } catch (err: any) {
       setError(err.message);

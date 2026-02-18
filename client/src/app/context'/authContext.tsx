@@ -1,3 +1,5 @@
+"use client";
+
 import axios from "axios";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
@@ -17,24 +19,27 @@ type RegisterInput = {
     password: string
 }
 
+
+type RecruiterRegisterInput = {
+    name: string,
+    email: string,
+    password: string
+    companyName: string,
+    desigNation: string,
+    companyWebsite: string
+}
+
 type AuthContextValue = {
     user: User | null;
     loading: boolean,
     login: (email: string, password: string) => Promise<User>,
     register: (input: RegisterInput) => Promise<User>;
+    recruiterRegister: (input: RecruiterRegisterInput) => Promise<void>;
     logout: () => Promise<void>;
     refresh: () => Promise<void>;
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-
-const parseJson = async (res: Response) => {
-  try {
-    return await res.json();
-  } catch {
-    return null;
-  }
-};
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -86,6 +91,21 @@ export const AuthProvider = ({children} : {children: React.ReactNode}) => {
         throw new Error(message);
         }
     };
+    const recruiterRegister = async (input: RecruiterRegisterInput) => {
+        try {
+        const res = await axios.post(
+            `${API_BASE}/auth/recruiter/register`,
+            input,
+            { withCredentials: true },
+        );
+        setUser(res.data?.user ?? null);
+        return res.data?.user;
+        } catch (error: any) {
+        const message =
+            error?.response?.data?.error || "Registration failed";
+        throw new Error(message);
+        }
+    };
 
     const logout = async () => {
         try {
@@ -104,7 +124,7 @@ export const AuthProvider = ({children} : {children: React.ReactNode}) => {
     }, []);
 
     const value: AuthContextValue = {
-        user, loading, login, logout, register, refresh: fetchMe
+        user, loading, login, logout, register, recruiterRegister, refresh: fetchMe
     }
 
 
