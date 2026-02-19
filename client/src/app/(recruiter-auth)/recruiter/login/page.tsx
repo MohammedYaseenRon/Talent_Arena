@@ -1,8 +1,11 @@
+import LoginPage from '@/components/recruiter/Login'
 import React from 'react'
 
 const RecruiterLogin = () => {
   return (
-    <div>RecruiterLogin</div>
+    <div>
+      <LoginPage />
+    </div>
   )
 }
 

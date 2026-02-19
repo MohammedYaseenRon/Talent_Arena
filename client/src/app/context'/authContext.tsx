@@ -68,7 +68,9 @@ export const AuthProvider = ({children} : {children: React.ReactNode}) => {
             {email, password},
             { withCredentials: true },
         );
-        setUser(res.data?.user ?? null);
+        const user = res.data?.user; 
+        setUser(user);
+        return user;
         return res.data?.user;
         } catch (error: any) {
         const message =
@@ -103,6 +105,22 @@ export const AuthProvider = ({children} : {children: React.ReactNode}) => {
         } catch (error: any) {
         const message =
             error?.response?.data?.error || "Registration failed";
+        throw new Error(message);
+        }
+    };
+
+    const recruiterLogin = async (email: string, password: string) => {
+        try {
+        const res = await axios.post(
+            `${API_BASE}/recruiter/login`,
+            {email, password},
+            { withCredentials: true },
+        );
+        setUser(res.data?.user ?? null);
+        return res.data?.user;
+        } catch (error: any) {
+        const message =
+            error?.response?.data?.error || "Login failed";
         throw new Error(message);
         }
     };

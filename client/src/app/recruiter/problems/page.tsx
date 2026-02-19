@@ -1,9 +1,32 @@
-import React from 'react'
+// "use client";
 
-const Problems = () => {
-  return (
-    <div>Problems</div>
-  )
-}
+// import Editor from "@monaco-editor/react";
 
-export default Problems
+// type CodeEditorProps = {
+//   code: string;
+//   onChange: (value: string) => void;
+//   readOnly?: boolean;
+// };
+
+// export default function CodeEditor({
+//   code,
+//   onChange,
+//   readOnly = false,
+// }: CodeEditorProps) {
+//   return (
+//     <Editor
+//       height="100%"
+//       language="javascript"
+//       theme="vs-dark"
+//       value={code}
+//       onChange={(value) => onChange(value || "")}
+//       options={{
+//         fontSize: 14,
+//         minimap: { enabled: false },
+//         wordWrap: "on",
+//         readOnly,
+//         automaticLayout: true,
+//       }}
+//     />
+//   );
+// }

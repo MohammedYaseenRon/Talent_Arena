@@ -58,7 +58,7 @@ export default function Register() {
         desigNation: formData.desigNation || "",
         companyWebsite: formData.companyWebsite || ""
       });
-      router.push("/challenges");
+      router.push("/recruiter");
     } catch (err: any) {
       setError(err.message);
     } finally {
