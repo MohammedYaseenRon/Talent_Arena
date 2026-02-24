@@ -35,7 +35,7 @@ const Instruction = () => {
 
   const handleStartChallenge = () => {
     if (agreed) {
-      router.push("/challenges/battle");
+      router.push("/problems");
     }
   };
 

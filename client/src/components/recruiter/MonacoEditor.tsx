@@ -5,14 +5,14 @@ import {
   FileTabs,
   useSandpack,
 } from "@codesandbox/sandpack-react";
- 
+import { useState } from "react";
+
 export default function MonacoEditor() {
   const { code, updateCode } = useActiveCode();
   const { sandpack } = useSandpack();
  
   return (
     <SandpackStack style={{ height: "100vh", margin: 0 }}>
-      <FileTabs />
       <div style={{ flex: 1, paddingTop: 8, background: "#1e1e1e" }}>
         <Editor
           width="100%"
