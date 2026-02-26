@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Trophy, Clock, Users, Zap, Target, Shield } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Clock, Target } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -11,321 +11,311 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Link from "next/link";
+import axios from "axios";
 
-type Difficulty = "Beginner" | "Intermediate" | "Advanced";
-type ChallengeStatus = "ACTIVE" | "UPCOMING" | "COMPLETED";
+type Difficulty = "EASY" | "MEDIUM" | "HARD" | "All";
+type ChallengeType = "FRONTEND" | "BACKEND" | "DSA" | "SYSTEM_DESIGN" | "All";
+type Status = "LIVE" | "SCHEDULED" | "ENDED" | "All";
 
 export interface Challenge {
-  id: string;
+  sessionId: string;
+  challengeId: string;
   title: string;
-  company: string;
   description: string;
-  difficulty: Difficulty;
-  duration: string;
-  participants: number;
-  rewards: number;
-  status: ChallengeStatus;
+  difficulty: string;
+  challengeType: string;
+  startTime: string;
+  endTime: string;
+  status: "SCHEDULED" | "LIVE" | "ENDED";
 }
 
-export const challengeList: Challenge[] = [
-  {
-    id: "ch_001",
-    title: "JavaScript Fundamentals Challenge",
-    company: "Google",
-    description: "Test your JavaScript basics with real-world coding tasks.",
-    difficulty: "Beginner",
-    duration: "10 Days",
-    participants: 1450,
-    rewards: 200,
-    status: "ACTIVE",
-  },
-  {
-    id: "ch_002",
-    title: "React UI Engineering Challenge",
-    company: "Meta",
-    description: "Build clean, reusable UI components using React.",
-    difficulty: "Intermediate",
-    duration: "7 Days",
-    participants: 980,
-    rewards: 350,
-    status: "ACTIVE",
-  },
-  {
-    id: "ch_003",
-    title: "Frontend Styling Challenge",
-    company: "Netflix",
-    description: "Create responsive and visually polished UI layouts.",
-    difficulty: "Beginner",
-    duration: "5 Days",
-    participants: 720,
-    rewards: 180,
-    status: "ACTIVE",
-  },
-  {
-    id: "ch_004",
-    title: "API Integration Sprint",
-    company: "Amazon",
-    description: "Consume and manage APIs efficiently in frontend apps.",
-    difficulty: "Intermediate",
-    duration: "6 Days",
-    participants: 640,
-    rewards: 320,
-    status: "ACTIVE",
-  },
-  {
-    id: "ch_005",
-    title: "Data Structures Speed Run",
-    company: "Microsoft",
-    description: "Solve core DSA problems under time pressure.",
-    difficulty: "Advanced",
-    duration: "5 Days",
-    participants: 510,
-    rewards: 500,
-    status: "ACTIVE",
-  },
-  {
-    id: "ch_006",
-    title: "TypeScript Reliability Challenge",
-    company: "Stripe",
-    description: "Write type-safe, scalable TypeScript code.",
-    difficulty: "Intermediate",
-    duration: "8 Days",
-    participants: 430,
-    rewards: 400,
-    status: "UPCOMING",
-  },
-  {
-    id: "ch_007",
-    title: "Authentication & Security Basics",
-    company: "Auth0",
-    description: "Implement secure authentication flows correctly.",
-    difficulty: "Advanced",
-    duration: "7 Days",
-    participants: 390,
-    rewards: 600,
-    status: "UPCOMING",
-  },
-  {
-    id: "ch_008",
-    title: "Next.js Routing Challenge",
-    company: "Vercel",
-    description: "Master routing, layouts, and data fetching in Next.js.",
-    difficulty: "Intermediate",
-    duration: "6 Days",
-    participants: 560,
-    rewards: 420,
-    status: "ACTIVE",
-  },
-  {
-    id: "ch_009",
-    title: "Git & Collaboration Workflow",
-    company: "GitHub",
-    description: "Practice real-world Git and GitHub collaboration.",
-    difficulty: "Beginner",
-    duration: "4 Days",
-    participants: 1200,
-    rewards: 150,
-    status: "ACTIVE",
-  },
-  {
-    id: "ch_010",
-    title: "Full-Stack Mini Project",
-    company: "Startup Studio",
-    description: "Build and deploy a complete mini product end-to-end.",
-    difficulty: "Advanced",
-    duration: "14 Days",
-    participants: 310,
-    rewards: 800,
-    status: "UPCOMING",
-  },
-];
-
-const getDifficultyColor = (difficulty: Difficulty) => {
+const getDifficultyColor = (difficulty: string) => {
   switch (difficulty) {
-    case "Beginner":
+    case "EASY":
       return "text-green-400 bg-green-400/10 border-green-400/30";
-    case "Intermediate":
+    case "MEDIUM":
       return "text-yellow-400 bg-yellow-400/10 border-yellow-400/30";
-    case "Advanced":
+    case "HARD":
       return "text-red-400 bg-red-400/10 border-red-400/30";
+    default:
+      return "text-gray-400 bg-gray-400/10 border-gray-400/30";
   }
 };
 
-const getStatusColor = (status: ChallengeStatus) => {
+const getStatusColor = (status: string) => {
   switch (status) {
-    case "ACTIVE":
-      return "text-green-400 bg-green-400/20";
-    case "UPCOMING":
+    case "LIVE":
+      return "text-green-400 bg-green-400/20 animate-pulse";
+    case "SCHEDULED":
       return "text-blue-400 bg-blue-400/20";
-    case "COMPLETED":
+    case "ENDED":
+      return "text-gray-400 bg-gray-400/20";
+    default:
       return "text-gray-400 bg-gray-400/20";
   }
 };
 
-const ChallengeList = () => {
-  const [selectedDifficulty, setSelectedDifficulty] = useState<
-    Difficulty | "All"
-  >("All");
-  const [selectedStatus, setSelectedStatus] = useState<ChallengeStatus | "All">(
-    "All",
-  );
+const ChallengesPage = () => {
+  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>("All");
+  const [selectedType, setSelectedType] = useState<ChallengeType>("All");
+  const [selectedStatus, setSelectedStatus] = useState<Status>("All");
+  
+  // Separate state for each status
+  const [liveChallenges, setLiveChallenges] = useState<Challenge[]>([]);
+  const [upcomingChallenges, setUpcomingChallenges] = useState<Challenge[]>([]);
+  const [endedChallenges, setEndedChallenges] = useState<Challenge[]>([]);
+  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredChallenges = challengeList.filter((challenge) => {
+  const fetchLiveChallenges = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/challenge/live`,
+        { withCredentials: true }
+      );
+      setLiveChallenges(response.data.challenges || []);
+    } catch (error) {
+      console.error("Error fetching live challenges:", error);
+    }
+  };
+
+  // Fetch UPCOMING challenges (refresh every 30 seconds)
+  const fetchUpcomingChallenges = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/challenge/upcoming`,
+        { withCredentials: true }
+      );
+      setUpcomingChallenges(response.data.challenges || []);
+    } catch (error) {
+      console.error("Error fetching upcoming challenges:", error);
+    }
+  };
+
+  // Fetch ENDED challenges (fetch once on load)
+  const fetchEndedChallenges = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/challenge/ended`,
+        { withCredentials: true }
+      );
+      setEndedChallenges(response.data.challenges || []);
+    } catch (error) {
+      console.error("Error fetching ended challenges:", error);
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    const loadAll = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([
+          fetchLiveChallenges(),
+          fetchUpcomingChallenges(),
+          fetchEndedChallenges(),
+        ]);
+      } catch (err) {
+        setError("Failed to load challenges");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAll();
+
+    const liveInterval = setInterval(fetchLiveChallenges, 10000);
+
+    // Auto-refresh UPCOMING challenges every 30 seconds
+    const upcomingInterval = setInterval(fetchUpcomingChallenges, 30000);
+
+    return () => {
+      clearInterval(liveInterval);
+      clearInterval(upcomingInterval);
+    };
+  }, []);
+
+  // Combine all challenges
+  const allChallenges = [...liveChallenges, ...upcomingChallenges, ...endedChallenges];
+
+  // Filter function
+  const filteredChallenges = allChallenges.filter((challenge) => {
     const matchesDifficulty =
-      selectedDifficulty === "All" ||
-      challenge.difficulty === selectedDifficulty;
+      selectedDifficulty === "All" || challenge.difficulty === selectedDifficulty;
+    const matchesType =
+      selectedType === "All" || challenge.challengeType === selectedType;
     const matchesStatus =
       selectedStatus === "All" || challenge.status === selectedStatus;
-    return matchesDifficulty && matchesStatus;
+    
+    return matchesDifficulty && matchesType && matchesStatus;
   });
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mx-auto mb-4"></div>
+          <p className="text-slate-400">Loading challenges...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-400">{error}</p>
+      </div>
+    );
+  }
+
+  const ChallengeCard = ({ challenge }: { challenge: Challenge }) => (
+    <Link href={`/challenges/${challenge.challengeId}`} key={challenge.sessionId}>
+      <div className="group relative backdrop-blur border border-gray-900 rounded-lg p-5 transition-all duration-300 hover:shadow-lg cursor-pointer">
+        <div className="flex items-center justify-between mb-3">
+          <span
+            className={`text-xs font-bold px-2 py-1 rounded font-mono ${getStatusColor(
+              challenge.status
+            )}`}
+          >
+            {challenge.status === "LIVE" && "🔴 "}
+            {challenge.status}
+          </span>
+          <span
+            className={`text-xs font-bold px-2 py-1 rounded border font-mono ${getDifficultyColor(
+              challenge.difficulty
+            )}`}
+          >
+            {challenge.difficulty}
+          </span>
+        </div>
+
+        {/* Title */}
+        <h3 className="text-lg font-bold mb-2 group-hover:text-purple-400 transition-colors">
+          {challenge.title}
+        </h3>
+
+        {/* Description */}
+        <p className="text-sm text-slate-400 mb-4 line-clamp-2">
+          {challenge.description}
+        </p>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800">
+          <div className="flex items-center gap-1.5">
+            <Clock className="w-4 h-4 text-blue-400" />
+            <span className="text-xs text-slate-300 font-mono">
+              {new Date(challenge.startTime).toLocaleDateString()}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Target className="w-4 h-4 text-purple-400" />
+            <span className="text-xs text-slate-300 font-mono">
+              {challenge.challengeType}
+            </span>
+          </div>
+        </div>
+
+        {/* Hover Glow */}
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 to-blue-600/0 group-hover:from-purple-600/5 group-hover:to-blue-600/5 rounded-lg transition-all duration-300 pointer-events-none" />
+      </div>
+    </Link>
+  );
+
   return (
-    <div className="min-h-screen  p-6 ">
+    <div className="min-h-screen p-6">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-8">
         <div className="flex items-center gap-3 mb-2">
           <Target className="w-8 h-8 text-purple-400" />
           <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">
-            ACTIVE CHALLENGES
+            CHALLENGES
           </h1>
         </div>
         <p className="text-slate-400 text-sm font-mono ml-11">
           Choose your battle and prove your skills
         </p>
       </div>
-      <div className="max-w-7xl mx-auto flex items-center gap-4">
-        <Select
-          value={selectedDifficulty}
-          onValueChange={(e) => setSelectedDifficulty(e as Difficulty | "All")}
-        >
-          <SelectTrigger className="w-[180px]">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Difficulty
-            </label>
-            <SelectValue placeholder="Difficulty" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="All">All</SelectItem>
-              <SelectItem value="Beginner">Beginner</SelectItem>
-              <SelectItem value="Intermediate">Intermediate</SelectItem>
-              <SelectItem value="Advanced">Advanced</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+
+      {/* Filters */}
+      <div className="max-w-7xl mx-auto flex items-center gap-4 mb-6">
+        {/* Status Filter */}
         <Select
           value={selectedStatus}
-          onValueChange={(e) => setSelectedStatus(e as ChallengeStatus | "All")}
+          onValueChange={(e) => setSelectedStatus(e as Status)}
         >
           <SelectTrigger className="w-[180px]">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Status
-            </label>
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="All">All</SelectItem>
-              <SelectItem value="ACTIVE">Active</SelectItem>
-              <SelectItem value="UPCOMING">Upcoming</SelectItem>
-              <SelectItem value="UPCOMING">Completed</SelectItem>
+              <SelectItem value="All">All Status</SelectItem>
+              <SelectItem value="LIVE">🔴 Live</SelectItem>
+              <SelectItem value="SCHEDULED">📅 Upcoming</SelectItem>
+              <SelectItem value="ENDED">🏁 Ended</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
+
+        {/* Difficulty Filter */}
         <Select
-          value={selectedStatus}
-          onValueChange={(e) => setSelectedStatus(e as ChallengeStatus | "All")}
+          value={selectedDifficulty}
+          onValueChange={(e) => setSelectedDifficulty(e as Difficulty)}
         >
           <SelectTrigger className="w-[180px]">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Category
-            </label>
-            <SelectValue placeholder="Category" />
+            <SelectValue placeholder="Difficulty" />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="All">All</SelectItem>
-              <SelectItem value="Coding">Coding</SelectItem>
-              <SelectItem value="Frontend">Frontend</SelectItem>
-              <SelectItem value="Backend">Backend</SelectItem>
+              <SelectItem value="All">All Difficulties</SelectItem>
+              <SelectItem value="EASY">Easy</SelectItem>
+              <SelectItem value="MEDIUM">Medium</SelectItem>
+              <SelectItem value="HARD">Hard</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
+
+        {/* Type Filter */}
+        <Select
+          value={selectedType}
+          onValueChange={(e) => setSelectedType(e as ChallengeType)}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="All">All Types</SelectItem>
+              <SelectItem value="FRONTEND">Frontend</SelectItem>
+              <SelectItem value="BACKEND">Backend</SelectItem>
+              <SelectItem value="DSA">DSA</SelectItem>
+              <SelectItem value="SYSTEM_DESIGN">System Design</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
+        {/* Results Count */}
+        <div className="ml-auto text-sm text-slate-400 font-mono">
+          Showing <span className="text-purple-400 font-bold">{filteredChallenges.length}</span> of {allChallenges.length} challenges
+        </div>
       </div>
-      '{/* Challenge Grid */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-1 gap-4">
-        {filteredChallenges.map((challenge) => (
-          <Link href="/challenges/instruction"><div
-            key={challenge.id}
-            className="group relative backdrop-blur border border-gray-900 rounded-lg p-5 transition-all duration-300 hover:shadow-lg hover:secondary/100 cursor-pointer"
-          >
-            {/* Status Badge */}
-            <div className="flex items-center justify-between mb-3">
-              <span
-                className={`text-xs font-bold px-2 py-1 rounded font-mono ${getStatusColor(
-                  challenge.status,
-                )}`}
-              >
-                {challenge.status}
-              </span>
-              <div className="flex items-center gap-2">
-                <span
-                  className={`text-xs font-bold px-2 py-1 rounded border font-mono ${getDifficultyColor(
-                    challenge.difficulty,
-                  )}`}
-                >
-                  {challenge.difficulty}
-                </span>
-                <span className="shrink-0 text-muted-foreground transition-transform duration-300">
-                  →
-                </span>
-              </div>
-            </div>
 
-            {/* Title & Company */}
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <h3 className="text-lg font-bold b-1 group-hover:text-purple-400 transition-colors line-clamp-2">
-                  {challenge.title}
-                  <span className="text-sm pl-3 text-slate-500 font-mono mb-3">
-                    by {challenge.company}
-                  </span>
-                </h3>
-
-                {/* Description */}
-                <p className="text-sm text-slate-400 mb-4 line-clamp-2">
-                  {challenge.description}
-                </p>
-              </div>
-              <div className="grid grid-cols-3 gap-3 pt-3 border-t border-slate-800">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-blue-400" />
-                  <span className="text-xs text-slate-300 font-mono">
-                    {challenge.duration}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Users className="w-4 h-4 text-purple-400" />
-                  <span className="text-xs text-slate-300 font-mono">
-                    {challenge.participants}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Trophy className="w-4 h-4 text-yellow-400" />
-                  <span className="text-xs text-slate-300 font-mono">
-                    {challenge.rewards}
-                  </span>
-                </div>
-              </div>
-            </div>
-            {/* Hover Effect Glow */}
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 to-blue-600/0 group-hover:from-purple-600/5 group-hover:to-blue-600/5 rounded-lg transition-all duration-300 pointer-events-none" />
+      {/* Challenge Grid */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 gap-4">
+        {filteredChallenges.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            <p className="text-lg">No challenges found</p>
+            <p className="text-sm">Try adjusting your filters</p>
           </div>
-          </Link>
-        ))}
+        ) : (
+          filteredChallenges.map((challenge) => (
+            <ChallengeCard key={challenge.sessionId} challenge={challenge} />
+          ))
+        )}
       </div>
     </div>
   );
 };
 
-export default ChallengeList;
+export default ChallengesPage;

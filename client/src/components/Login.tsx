@@ -25,7 +25,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(formData.email, formData.password);
-      router.push("/challenge");
+      router.push("/challenges");
     } catch (err: any) {
       setError(err.message);
     } finally {

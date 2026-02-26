@@ -123,13 +123,19 @@ export default function CreateChallengeForm() {
       };
 
       const response = await axios.post(
-        "http://localhost:4000/challenge/create",
+        "http://localhost:4000/challenge",
         payload,
         { withCredentials: true },
       );
-
+      console.log(response.data);
+      const challengeId = response.data.challenge?.id;
+      console.log(challengeId);
+      
+      if (!challengeId) {
+        throw new Error("Challenge ID not returned from server");
+      }
       toast.success("Challenge create successfully");
-      setChallengeId(response.data.id);
+      setChallengeId(challengeId);
       setIsModalOpen(true);
       console.log("Challenge created:", response.data);
       form.reset();
@@ -461,7 +467,6 @@ export default function CreateChallengeForm() {
                     </div>
                   )}
 
-                  {/* Submit Button */}
                   <Button
                     type="submit"
                     disabled={loading}
