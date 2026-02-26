@@ -6,6 +6,7 @@ import challengeRoutes from "./routes/challengeRoutes.js";
 
 import cookie from "cookie-parser";
 import { startChallengeScheduler } from "./jobs/challengeScheduler.js";
+import { startCronJobs } from "./services/cron.service.js";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 4001;
@@ -38,8 +39,7 @@ app.use("/challenge", challengeRoutes)
 //   const value = await redis.get("ping");
 //   console.log("Redis test:", value);
 // }
-
+startCronJobs();
 app.listen(PORT, () => {
-  startChallengeScheduler();
   console.log(`Server is listening on ${PORT}`);
 });

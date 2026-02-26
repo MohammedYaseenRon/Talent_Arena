@@ -75,17 +75,17 @@ export const registration = async (req: Request, res: Response) => {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "none", // important for cross-origin
-      maxAge: 15 * 60 * 1000, // 15 min
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ← ADD THIS
+      maxAge: 15 * 60 * 1000,
       path: "/",
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: "/api/auth", // limit scope
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ← ADD THIS
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: "/api/auth",
     });
 
     return res.status(201).json({
@@ -172,7 +172,7 @@ export const recruiterRegistration = async (req: Request, res: Response) => {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ← ADD THIS
       maxAge: 15 * 60 * 1000,
       path: "/",
     });
@@ -180,7 +180,7 @@ export const recruiterRegistration = async (req: Request, res: Response) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ← ADD THIS
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/api/auth",
     });
@@ -204,6 +204,7 @@ export const recruiterRegistration = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 export const listRecruiterProfiles = async (req: Request, res: Response) => {
   try {
@@ -253,17 +254,17 @@ export const login = async (req: Request, res: Response) => {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "none", // important for cross-origin
-      maxAge: 15 * 60 * 1000, // 15 min
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ← ADD THIS
+      maxAge: 15 * 60 * 1000,
       path: "/",
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: "/api/auth", // limit scope
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ← ADD THIS
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: "/api/auth",
     });
 
     return res.status(200).json({
