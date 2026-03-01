@@ -142,7 +142,6 @@ export const challengeSessions = pgTable("challenge_sessions", {
   status: sessionStatusEnum("status").default("SCHEDULED").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(), // ADD THIS LINE
-
 });
 
 export const sessionParticipants = pgTable(

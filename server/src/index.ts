@@ -32,7 +32,6 @@ app.get("/", (req, res) => {
 
 app.use("/auth", authRoutes);
 app.use("/challenge", challengeRoutes)
-
 // async function startServer() {
 //   //Redis test (TEMPORARY)
 //   await redis.set("ping", "pong");
