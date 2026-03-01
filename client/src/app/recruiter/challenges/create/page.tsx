@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/card";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { ChallengeSuccessModal } from "@/components/recruiter/Schedule";
+import { ChallengeSuccessModal } from "@/components/recruiter/SuccessModal";
 
 interface frontendDetailsDetails {
   taskDescription: string;
