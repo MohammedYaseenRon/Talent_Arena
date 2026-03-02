@@ -122,7 +122,7 @@ export default function CreateChallengeForm() {
             : undefined,
       };
 
-      const response = await axios.post(
+      const response = await apipost(
         "http://localhost:4000/challenge",
         payload,
         { withCredentials: true },

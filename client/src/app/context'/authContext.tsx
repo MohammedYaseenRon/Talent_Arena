@@ -1,5 +1,6 @@
 "use client";
 
+import api from "@/lib/axios";
 import axios from "axios";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
@@ -29,11 +30,14 @@ type RecruiterRegisterInput = {
     companyWebsite: string
 }
 
+
+
 type AuthContextValue = {
     user: User | null;
     loading: boolean,
     login: (email: string, password: string) => Promise<User>,
     register: (input: RegisterInput) => Promise<User>;
+    fetchMe: () => Promise<void>;
     recruiterRegister: (input: RecruiterRegisterInput) => Promise<void>;
     logout: () => Promise<void>;
     refresh: () => Promise<void>;
@@ -50,7 +54,7 @@ export const AuthProvider = ({children} : {children: React.ReactNode}) => {
 
     const fetchMe = async () => {
         try {
-            const res = await axios.get(`${API_BASE}/auth/me`, {
+            const res = await api.get(`${API_BASE}/auth/me`, {
                 withCredentials: true,
             });
             setUser(res.data.user ?? null);
@@ -63,7 +67,7 @@ export const AuthProvider = ({children} : {children: React.ReactNode}) => {
 
     const login = async (email: string, password: string) => {
         try {
-        const res = await axios.post(
+        const res = await api.post(
             `${API_BASE}/auth/login`,
             {email, password},
             { withCredentials: true },
@@ -71,7 +75,7 @@ export const AuthProvider = ({children} : {children: React.ReactNode}) => {
         const user = res.data?.user; 
         setUser(user);
         return user;
-        return res.data?.user;
+        // return res.data?.user;
         } catch (error: any) {
         const message =
             error?.response?.data?.error || "Login failed";
@@ -80,7 +84,7 @@ export const AuthProvider = ({children} : {children: React.ReactNode}) => {
     };
     const register = async (input: RegisterInput) => {
         try {
-        const res = await axios.post(
+        const res = await api.post(
             `${API_BASE}/auth/register`,
             input,
             { withCredentials: true },
@@ -95,7 +99,7 @@ export const AuthProvider = ({children} : {children: React.ReactNode}) => {
     };
     const recruiterRegister = async (input: RecruiterRegisterInput) => {
         try {
-        const res = await axios.post(
+        const res = await api.post(
             `${API_BASE}/auth/recruiter/register`,
             input,
             { withCredentials: true },
@@ -105,22 +109,6 @@ export const AuthProvider = ({children} : {children: React.ReactNode}) => {
         } catch (error: any) {
         const message =
             error?.response?.data?.error || "Registration failed";
-        throw new Error(message);
-        }
-    };
-
-    const recruiterLogin = async (email: string, password: string) => {
-        try {
-        const res = await axios.post(
-            `${API_BASE}/recruiter/login`,
-            {email, password},
-            { withCredentials: true },
-        );
-        setUser(res.data?.user ?? null);
-        return res.data?.user;
-        } catch (error: any) {
-        const message =
-            error?.response?.data?.error || "Login failed";
         throw new Error(message);
         }
     };
@@ -142,7 +130,7 @@ export const AuthProvider = ({children} : {children: React.ReactNode}) => {
     }, []);
 
     const value: AuthContextValue = {
-        user, loading, login, logout, register, recruiterRegister, refresh: fetchMe
+        user, loading, login, logout, register, recruiterRegister, refresh: fetchMe, fetchMe
     }
 
 

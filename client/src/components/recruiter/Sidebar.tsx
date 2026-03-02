@@ -9,6 +9,7 @@ import {
   Settings,
   Zap,
   Tags,
+  User2,
 } from "lucide-react";
 import {
   Sidebar,
@@ -20,10 +21,29 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import clsx from "clsx";
+import { useAuth } from "@/app/context'/authContext";
+import { useEffect } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 const mainItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -41,6 +61,18 @@ const manageItems = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const { user, fetchMe, logout } = useAuth();
+  const router =  useRouter();
+
+  useEffect(() => {
+    fetchMe();
+  }, []);
+
+
+   const handleLogout = async () => {
+    await logout();
+    router.push("/login"); 
+  };
 
   return (
     <Sidebar className="border-r border-border">
@@ -76,7 +108,7 @@ export function AdminSidebar() {
                           "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
                           isActive
                             ? "bg-secondary text-primary font-medium glow-primary"
-                            : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                            : "text-muted-foreground hover:text-foreground hover:bg-secondary",
                         )}
                       >
                         <item.icon className="h-4 w-4" />
@@ -110,7 +142,7 @@ export function AdminSidebar() {
                           "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
                           isActive
                             ? "bg-secondary text-primary font-medium"
-                            : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                            : "text-muted-foreground hover:text-foreground hover:bg-secondary",
                         )}
                       >
                         <item.icon className="h-4 w-4" />
@@ -124,6 +156,41 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="p-3 border-t border-border">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full flex items-center gap-3 px-3 py-2 h-auto justify-start"
+            >
+              <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
+                <Avatar>
+                  <AvatarFallback>{user?.name?.charAt(0).toLocaleUpperCase() ?? "U"}</AvatarFallback>
+                </Avatar>
+              </div>
+              <div className="flex flex-col items-start text-left overflow-hidden">
+                <span className="text-sm font-medium truncate w-full">
+                  {user?.name ?? "User"}
+                </span>
+                <span className="text-xs text-muted-foreground truncate w-full">
+                  {user?.email ?? ""}
+                </span>
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-52" align="end" side="top">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="text-red-500 focus:text-red-500 focus:bg-red-500/10 cursor-pointer"
+            >
+              <span>Log out</span>
+              <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }

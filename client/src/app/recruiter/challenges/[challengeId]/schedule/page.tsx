@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
+import api from "@/lib/axios";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -95,8 +96,8 @@ export default function ScheduleSessionPage() {
     const load = async () => {
       try {
         const [challengeRes, sessionsRes] = await Promise.all([
-          axios.get(`http://localhost:4000/challenge/${challengeId}`, { withCredentials: true }),
-          axios.get(`http://localhost:4000/challenge/${challengeId}/sessions`, { withCredentials: true }),
+          api.get(`http://localhost:4000/challenge/${challengeId}`, { withCredentials: true }),
+          api.get(`http://localhost:4000/challenge/${challengeId}/sessions`, { withCredentials: true }),
         ]);
         setChallenge(challengeRes.data.challenge);
         setSessions(sessionsRes.data.sessions ?? []);

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import Link from "next/link";
+import api from "@/lib/axios";
 
 export default function InstructionsPage() {
   const params = useParams();
@@ -21,7 +22,7 @@ export default function InstructionsPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await axios.get(
+        const res = await api.get(
           `${process.env.NEXT_PUBLIC_API_URL}/challenge/${challengeId}/instructions?session=${sessionId}`,
           { withCredentials: true }
         );

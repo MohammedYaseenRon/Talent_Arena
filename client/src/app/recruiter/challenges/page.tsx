@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
+import api from "@/lib/axios";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -125,7 +126,7 @@ function ChallengeCard({ challenge, onRefresh }: { challenge: Challenge; onRefre
     e.stopPropagation();
     setPublishing(true);
     try {
-      await axios.patch(`${BASE_URL}/${challenge.challengeId}/publish`, {}, { withCredentials: true });
+      await api.patch(`${BASE_URL}/${challenge.challengeId}/publish`, {}, { withCredentials: true });
       toast.success("Challenge published!");
       onRefresh();
     } catch (err: any) {
@@ -256,7 +257,7 @@ export default function ChallengesListPage() {
       });
       if (statusFilter !== "ALL") params.append("status", statusFilter);
 
-      const res = await axios.get(`${BASE_URL}?${params.toString()}`, { withCredentials: true });
+      const res = await api.get(`${BASE_URL}?${params.toString()}`, { withCredentials: true });
 
       setChallenges(res.data.challenges ?? []);
       setCounts(res.data.counts);           

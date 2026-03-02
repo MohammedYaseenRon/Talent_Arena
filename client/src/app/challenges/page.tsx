@@ -21,6 +21,7 @@ import {
 import Link from "next/link";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import api from "@/lib/axios";
 
 type Difficulty = "EASY" | "MEDIUM" | "HARD" | "All";
 type ChallengeType = "FRONTEND" | "BACKEND" | "DSA" | "SYSTEM_DESIGN" | "All";
@@ -311,7 +312,7 @@ const ChallengesPage = () => {
 
   const fetchLive = async () => {
     try {
-      const res = await axios.get(
+      const res = await api.get(
         `${process.env.NEXT_PUBLIC_API_URL}/challenge/live`,
         { withCredentials: true },
       );
@@ -323,7 +324,7 @@ const ChallengesPage = () => {
 
   const fetchUpcoming = async () => {
     try {
-      const res = await axios.get(
+      const res = await api.get(
         `${process.env.NEXT_PUBLIC_API_URL}/challenge/upcoming`,
         { withCredentials: true },
       );
@@ -335,7 +336,7 @@ const ChallengesPage = () => {
 
   const fetchEnded = async () => {
     try {
-      const res = await axios.get(
+      const res = await api.get(
         `${process.env.NEXT_PUBLIC_API_URL}/challenge/ended`,
         { withCredentials: true },
       );
