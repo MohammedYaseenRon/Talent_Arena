@@ -8,6 +8,7 @@ import {
   getUpcomingChallenges,
   getSessionsByChallenge,
   getEndedChallenges,
+  getChallenegeInstruction,
 } from "../controllers/challenge.controller.js";
 import { createSession } from "../controllers/session.controller.js";
 import { authenticateToken } from "../middleware/auth.middleware.js";
@@ -21,6 +22,7 @@ router.get("/ended", getEndedChallenges);
 router.get("/", authenticateToken, getAllChallenges);
 router.post("/", authenticateToken, createChallenge);
 router.get("/:challengeId", authenticateToken, getChallengeById);
+router.get("/:challengeId/instructions", authenticateToken, getChallenegeInstruction);
 router.patch("/:challengeId/publish", authenticateToken, publishChallenge);
 
 router.post("/:challengeId/sessions", authenticateToken, createSession);

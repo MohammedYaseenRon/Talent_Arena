@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Clock, Zap, Calendar, ChevronRight, Timer,Radio, Flag } from "lucide-react";
+import {
+  Clock,
+  Zap,
+  Calendar,
+  ChevronRight,
+  Timer,
+  Radio,
+  Flag,
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -12,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import Link from "next/link";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 type Difficulty = "EASY" | "MEDIUM" | "HARD" | "All";
 type ChallengeType = "FRONTEND" | "BACKEND" | "DSA" | "SYSTEM_DESIGN" | "All";
@@ -28,7 +37,6 @@ export interface Challenge {
   endTime: string;
   status: "SCHEDULED" | "LIVE" | "ENDED";
 }
-
 
 function useCountdown(target: string) {
   const [display, setDisplay] = useState("");
@@ -50,7 +58,6 @@ function useCountdown(target: string) {
   }, [target]);
   return display;
 }
-
 
 const difficultyConfig: Record<string, { label: string; classes: string }> = {
   EASY: {
@@ -93,8 +100,8 @@ function getDuration(start: string, end: string) {
   return h > 0 ? `${h}h ${m > 0 ? `${m}m` : ""}` : `${m}m`;
 }
 
-
 function ChallengeCard({ challenge }: { challenge: Challenge }) {
+  const router = useRouter();
   const countdown = useCountdown(
     challenge.status === "LIVE" ? challenge.endTime : challenge.startTime,
   );
@@ -105,10 +112,20 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
   };
   const duration = getDuration(challenge.startTime, challenge.endTime);
 
+  const handleNavigate = () => {
+    if (challenge.status === "LIVE" || challenge.status === "SCHEDULED") {
+      router.push(
+        `/challenges/${challenge.challengeId}/instructions?session=${challenge.sessionId}`,
+      );
+    } else if (challenge.status === "ENDED") {
+      router.push(`/challenges/${challenge.challengeId}/results`);
+    }
+  };
+
   return (
-    <Link href={`/challenges/${challenge.challengeId}`}>
-      <div
-        className={`group relative bg-slate-950 border transition-all duration-200 cursor-pointer overflow-hidden
+    <div
+      onClick={handleNavigate}
+      className={`group relative bg-slate-950 border transition-all duration-200 cursor-pointer overflow-hidden
         ${
           challenge.status === "LIVE"
             ? "border-emerald-900/60 hover:border-emerald-700"
@@ -116,141 +133,146 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
               ? "border-slate-800 hover:border-blue-800"
               : "border-slate-900 hover:border-slate-700 opacity-70 hover:opacity-100"
         }`}
-      >
-        {/* Live top glow bar */}
-        {challenge.status === "LIVE" && (
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
-        )}
-        {challenge.status === "SCHEDULED" && (
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-blue-600/50 to-transparent" />
-        )}
+    >
+      {/* Live top glow bar */}
+      {challenge.status === "LIVE" && (
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
+      )}
+      {challenge.status === "SCHEDULED" && (
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-blue-600/50 to-transparent" />
+      )}
 
-        <div className="p-5">
-          <div className="flex items-start justify-between gap-4">
-            {/* Left — main content */}
-            <div className="flex-1 min-w-0">
-              {/* Status + type row */}
-              <div className="flex items-center gap-2 mb-3 flex-wrap">
-                {challenge.status === "LIVE" && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold px-2 py-0.5 bg-emerald-950 border border-emerald-800 text-emerald-400">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    LIVE
-                  </span>
-                )}
-                {challenge.status === "SCHEDULED" && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold px-2 py-0.5 bg-blue-950 border border-blue-900 text-blue-400">
-                    <Calendar className="w-3 h-3" />
-                    UPCOMING
-                  </span>
-                )}
-                {challenge.status === "ENDED" && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 bg-slate-900 border border-slate-800 text-slate-500">
-                    ENDED
-                  </span>
-                )}
-
-                {/* Difficulty */}
-                <span
-                  className={`text-xs font-mono font-bold px-2 py-0.5 border ${diff.classes}`}
-                >
-                  {diff.label}
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-4">
+          {/* Left — main content */}
+          <div className="flex-1 min-w-0">
+            {/* Status + type row */}
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              {challenge.status === "LIVE" && (
+                <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold px-2 py-0.5 bg-emerald-950 border border-emerald-800 text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  LIVE
                 </span>
-
-                {/* Type */}
-                <span className={`text-xs font-mono ${type.color}`}>
-                  {type.label}
+              )}
+              {challenge.status === "SCHEDULED" && (
+                <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold px-2 py-0.5 bg-blue-950 border border-blue-900 text-blue-400">
+                  <Calendar className="w-3 h-3" />
+                  UPCOMING
                 </span>
-              </div>
+              )}
+              {challenge.status === "ENDED" && (
+                <span className="inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 bg-slate-900 border border-slate-800 text-slate-500">
+                  ENDED
+                </span>
+              )}
 
-              {/* Title */}
-              <h3
-                className={`text-base font-bold mb-1.5 leading-snug transition-colors
+              {/* Difficulty */}
+              <span
+                className={`text-xs font-mono font-bold px-2 py-0.5 border ${diff.classes}`}
+              >
+                {diff.label}
+              </span>
+
+              {/* Type */}
+              <span className={`text-xs font-mono ${type.color}`}>
+                {type.label}
+              </span>
+            </div>
+
+            {/* Title */}
+            <h3
+              className={`text-base font-bold mb-1.5 leading-snug transition-colors
                 ${
                   challenge.status === "LIVE"
                     ? "text-slate-100 group-hover:text-emerald-300"
                     : "text-slate-100 group-hover:text-white"
                 }`}
-              >
-                {challenge.title}
-              </h3>
+            >
+              {challenge.title}
+            </h3>
 
-              {/* Description */}
-              {challenge.description && (
-                <p className="text-xs font-mono text-slate-600 line-clamp-1 leading-relaxed">
-                  {challenge.description}
-                </p>
-              )}
+            {/* Description */}
+            {challenge.description && (
+              <p className="text-xs font-mono text-slate-600 line-clamp-1 leading-relaxed">
+                {challenge.description}
+              </p>
+            )}
 
-              <div className="flex items-center gap-4 mt-3 flex-wrap">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-3 h-3 text-slate-600" />
-                  <span className="text-xs font-mono text-slate-600">
-                    {formatDate(challenge.startTime)} ·{" "}
-                    {formatTime(challenge.startTime)}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Timer className="w-3 h-3 text-slate-600" />
-                  <span className="text-xs font-mono text-slate-600">
-                    {duration}
-                  </span>
-                </div>
+            <div className="flex items-center gap-4 mt-3 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3 h-3 text-slate-600" />
+                <span className="text-xs font-mono text-slate-600">
+                  {formatDate(challenge.startTime)} ·{" "}
+                  {formatTime(challenge.startTime)}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Timer className="w-3 h-3 text-slate-600" />
+                <span className="text-xs font-mono text-slate-600">
+                  {duration}
+                </span>
               </div>
             </div>
+          </div>
 
-            <div className="flex flex-col items-end gap-3 shrink-0">
-              {challenge.status === "LIVE" && (
-                <div className="text-right">
-                  <p className="text-xs font-mono text-slate-600 mb-0.5">
-                    ends in
-                  </p>
-                  <p className="text-sm font-mono font-bold text-emerald-400">
-                    {countdown}
-                  </p>
-                </div>
-              )}
-              {challenge.status === "SCHEDULED" && (
-                <div className="text-right">
-                  <p className="text-xs font-mono text-slate-600 mb-0.5">
-                    starts in
-                  </p>
-                  <p className="text-sm font-mono font-bold text-blue-400">
-                    {countdown}
-                  </p>
-                </div>
-              )}
-              {challenge.status === "ENDED" && (
-                <div className="text-right">
-                  <p className="text-xs font-mono text-slate-700">
-                    {formatDate(challenge.endTime)}
-                  </p>
-                </div>
-              )}
+          <div className="flex flex-col items-end gap-3 shrink-0">
+            {challenge.status === "LIVE" && (
+              <div className="text-right">
+                <p className="text-xs font-mono text-slate-600 mb-0.5">
+                  ends in
+                </p>
+                <p className="text-sm font-mono font-bold text-emerald-400">
+                  {countdown}
+                </p>
+              </div>
+            )}
+            {challenge.status === "SCHEDULED" && (
+              <div className="text-right">
+                <p className="text-xs font-mono text-slate-600 mb-0.5">
+                  starts in
+                </p>
+                <p className="text-sm font-mono font-bold text-blue-400">
+                  {countdown}
+                </p>
+              </div>
+            )}
+            {challenge.status === "ENDED" && (
+              <div className="text-right">
+                <p className="text-xs font-mono text-slate-700">
+                  {formatDate(challenge.endTime)}
+                </p>
+              </div>
+            )}
 
-              {/* CTA */}
-              {challenge.status === "LIVE" && (
-                <span className="inline-flex items-center gap-1 text-xs font-mono font-bold px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white transition-colors">
-                  Join Now <ChevronRight className="w-3 h-3" />
-                </span>
-              )}
-              {challenge.status === "SCHEDULED" && (
-                <span className="inline-flex items-center gap-1 text-xs font-mono px-3 py-1.5 border border-slate-700 text-slate-400 group-hover:border-blue-700 group-hover:text-blue-400 transition-colors">
-                  View Details <ChevronRight className="w-3 h-3" />
-                </span>
-              )}
-              {challenge.status === "ENDED" && (
-                <span className="inline-flex items-center gap-1 text-xs font-mono px-3 py-1.5 border border-slate-800 text-slate-600 group-hover:border-slate-600 group-hover:text-slate-400 transition-colors">
-                  Results <ChevronRight className="w-3 h-3" />
-                </span>
-              )}
-            </div>
+            {challenge.status === "LIVE" && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation(); 
+                  router.push(
+                    `/challenges/${challenge.challengeId}/instructions?session=${challenge.sessionId}`,
+                  );
+                }}
+                className="..."
+              >
+                Join Now →
+              </button>
+            )}
+            {challenge.status === "SCHEDULED" && (
+              <button onClick={handleNavigate} className="inline-flex items-center gap-1 text-xs font-mono px-3 py-1.5 border border-slate-700 text-slate-400 group-hover:border-blue-700 group-hover:text-blue-400 transition-colors">
+                View Details <ChevronRight className="w-3 h-3" />
+              </button>
+            )}
+            {challenge.status === "ENDED" && (
+              <button className="inline-flex items-center gap-1 text-xs font-mono px-3 py-1.5 border border-slate-800 text-slate-600 group-hover:border-slate-600 group-hover:text-slate-400 transition-colors">
+                Results <ChevronRight className="w-3 h-3" />
+              </button>
+            )}
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
-
 
 function SectionHeader({
   icon,
@@ -275,7 +297,6 @@ function SectionHeader({
     </div>
   );
 }
-
 
 const ChallengesPage = () => {
   const [selectedDifficulty, setSelectedDifficulty] =

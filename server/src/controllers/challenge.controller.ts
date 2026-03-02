@@ -4,7 +4,9 @@ import {
   challenges,
   challengeSessions,
   frontendChallenges,
+  recruiterProfiles,
   sessionParticipants,
+  users,
 } from "../db/schema.js";
 import { and, eq } from "drizzle-orm";
 import { error } from "console";
@@ -279,6 +281,67 @@ export const getChallengeById = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const getChallenegeInstruction = async(req: Request, res: Response) => {
+  try{
+    const challengeId = Array.isArray(req.params.challengeId) ? req.params.challengeId[0] : req.params.challengeId;
+
+    const sessionId = req.query.session as string;
+    if(!challengeId || !sessionId) {
+      return res.status(400).json({error : 'challengeId is required'});
+    }
+
+    const [result] = await db
+    .select({
+      challengeId: challenges.id,
+        title: challenges.title,
+        description: challenges.description,
+        difficulty: challenges.difficulty,
+        challengeType: challenges.challengeType,
+        recruiterName: users.name,
+        recruiterEmail: users.email,
+        companyName: recruiterProfiles.companyName,
+        designation: recruiterProfiles.designation,
+        companyWebsite: recruiterProfiles.companyWebsite,
+    })
+    .from(challenges)
+    .innerJoin(users, eq(challenges.createdBy, users.id))
+    .leftJoin(recruiterProfiles, eq(recruiterProfiles.userId, users.id))
+    .where(eq(challenges.id, challengeId))
+    .limit(1);
+
+    if(!result){
+      return res.status(404).json({ error: "Challenge not found" });
+    }
+
+    const [session] = await db
+    .select()
+    .from(challengeSessions)
+    .where(eq(challengeSessions.id, sessionId))
+    .limit(1);
+
+    if(!session) {
+      return res.status(404).json({ error: "Session not found" });
+    }
+
+    const durationMs =  new Date(session.endTime).getTime() - new Date(session.startTime).getTime();
+    const durationMins = Math.floor(durationMs / 60000);
+    return res.status(200).json({
+      challenge: {
+        ...result,
+        session: {
+          sessionId: session.id,
+          startTime: session.startTime,
+          endTime: session.endTime,
+          status: session.status,
+          durationMins,
+        },
+      },
+    });
+  }catch(error) {
+    return res.status(500).json({ error: "Internal server error" });
+  }
+}
 export const getSessionsByChallenge = async (req: Request, res: Response) => {
   try {
     const challengeId = Array.isArray(req.params.challengeId)
