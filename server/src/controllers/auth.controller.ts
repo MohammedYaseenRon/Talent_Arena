@@ -11,6 +11,9 @@ import {
   userRoleEnum,
   recruiterProfiles,
 } from "../db/schema.js";
+import { auth } from "google-auth-library";
+import { email } from "zod";
+import { error } from "console";
 
 // const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -304,7 +307,35 @@ export const logout = async (req: Request, res: Response) => {
   }
 };
 
-// const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+export const getAuthMe = async(req: Request, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+
+    if(!userId) {
+      return res.status(401).json({error: "Unauthorized"});
+    }
+    const [user] = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email ,
+      role: users.role
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+
+    if(!user) {
+      return res.status(404).json({error : "User not found"});
+    }
+
+    return res.status(200).json({message : "User found", user});
+  }catch(error) {
+    return res.status(500).json({error: "Internal server error"});
+  }
+
+
+}
+ 
 
 export const refreshTokenHandler = async (req: Request, res: Response) => {
   try {
@@ -330,9 +361,7 @@ export const refreshTokenHandler = async (req: Request, res: Response) => {
       .where(eq(refreshTokens.token, token));
 
     if (!tokenRecord || tokenRecord.expiresAt < new Date()) {
-      return res
-        .status(401)
-        .json({ error: "Invalid or expired refresh token" });
+      return res.status(401).json({ error: "Invalid or expired refresh token" });
     }
 
     const newAccessToken = generateAccessToken(
@@ -340,9 +369,15 @@ export const refreshTokenHandler = async (req: Request, res: Response) => {
       tokenRecord.userRole,
     );
 
-    return res.status(200).json({
-      accessToken: newAccessToken,
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 15 * 60 * 1000,
+      path: "/",
     });
+
+    return res.status(200).json({ message: "Token refreshed successfully" });
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
       return res.status(401).json({ error: "Invalid refresh token" });
