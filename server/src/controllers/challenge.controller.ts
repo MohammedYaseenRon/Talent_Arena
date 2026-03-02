@@ -7,6 +7,7 @@ import {
   sessionParticipants,
 } from "../db/schema.js";
 import { and, eq } from "drizzle-orm";
+import { error } from "console";
 
 export const createChallenge = async (req: Request, res: Response) => {
   try {
@@ -96,7 +97,6 @@ export const createChallenge = async (req: Request, res: Response) => {
   }
 };
 
-
 export const scheduleChallengeSession = async (req: Request, res: Response) => {
   try {
     const challengeId = Array.isArray(req.params.challengeId)
@@ -163,17 +163,21 @@ export const scheduleChallengeSession = async (req: Request, res: Response) => {
   }
 };
 
-// getAllChallenges — paste this in challengeController.ts too
 export const getAllChallenges = async (req: Request, res: Response) => {
   try {
-    const { status } = req.query;
+    const { status, page = "1", limit = "10" } = req.query;
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string);
+    const offset = (pageNum - 1) * limitNum;
     const validStatuses = ["DRAFT", "PUBLISHED", "SCHEDULED", "LIVE", "ENDED"];
 
+    // 1. Fetch all challenges for counts (lightweight — just ids + isDraft)
     const allChallenges = await db
       .select()
       .from(challenges)
       .orderBy(challenges.createdAt);
 
+    // 2. Enrich with sessions
     const enriched = await Promise.all(
       allChallenges.map(async (challenge) => {
         const [activeSession] = await db
@@ -182,11 +186,6 @@ export const getAllChallenges = async (req: Request, res: Response) => {
           .where(eq(challengeSessions.challengeId, challenge.id))
           .orderBy(challengeSessions.startTime)
           .limit(1);
-
-        const uiStatus = deriveUIStatus({
-          isDraft: challenge.isDraft,
-          status: activeSession?.status ?? null,
-        });
 
         return {
           challengeId: challenge.id,
@@ -200,20 +199,41 @@ export const getAllChallenges = async (req: Request, res: Response) => {
           startTime: activeSession?.startTime ?? null,
           endTime: activeSession?.endTime ?? null,
           status: activeSession?.status ?? null,
-          uiStatus,
+          uiStatus: deriveUIStatus({
+            isDraft: challenge.isDraft,
+            status: activeSession?.status ?? null,
+          }),
         };
       })
     );
 
-    const filtered =
-      status && validStatuses.includes(status as string)
-        ? enriched.filter((c) => c.uiStatus === status)
-        : enriched;
+    // 3. Compute counts from full list — always accurate
+    const counts = {
+      ALL:       enriched.length,
+      DRAFT:     enriched.filter((c) => c.uiStatus === "DRAFT").length,
+      PUBLISHED: enriched.filter((c) => c.uiStatus === "PUBLISHED").length,
+      SCHEDULED: enriched.filter((c) => c.uiStatus === "SCHEDULED").length,
+      LIVE:      enriched.filter((c) => c.uiStatus === "LIVE").length,
+      ENDED:     enriched.filter((c) => c.uiStatus === "ENDED").length,
+    };
+
+    const filtered = status && validStatuses.includes(status as string)
+      ? enriched.filter((c) => c.uiStatus === status)
+      : enriched;
+
+    const paginated = filtered.slice(offset, offset + limitNum);
 
     return res.status(200).json({
-      challenges: filtered,
-      total: filtered.length,
-      filter: status ?? "ALL",
+      challenges: paginated,
+      counts,                          // always full counts
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: filtered.length,        // total in current filter
+        totalPages: Math.ceil(filtered.length / limitNum),
+        hasNext: offset + limitNum < filtered.length,
+        hasPrev: pageNum > 1,
+      },
     });
   } catch (error) {
     console.error("Get all challenges error:", error);
@@ -232,6 +252,56 @@ function deriveUIStatus(c: {
   if (c.status === "ENDED") return "ENDED";
   return "PUBLISHED";
 }
+
+export const getChallengeById = async (req: Request, res: Response) => {
+  try {
+    const challengeId = Array.isArray(req.params.challengeId)
+      ? req.params.challengeId[0]
+      : req.params.challengeId;
+
+    if(!challengeId) {
+      return res.status(400).json({error: "ChallengeId is required"})
+    }
+
+    const [challenge] = await db
+      .select()
+      .from(challenges)
+      .where(eq(challenges.id, challengeId))
+      .limit(1);
+
+    if (!challenge) {
+      return res.status(404).json({ error: "Challenge not found" });
+    }
+
+    return res.status(200).json({ challenge });
+  } catch (error) {
+    console.error("Get challenge error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+export const getSessionsByChallenge = async (req: Request, res: Response) => {
+  try {
+    const challengeId = Array.isArray(req.params.challengeId)
+      ? req.params.challengeId[0]
+      : req.params.challengeId;
+
+    if(!challengeId) {
+      return res.status(400).json({error: "ChallengeId is required"})
+    }
+
+    const sessions = await db
+      .select()
+      .from(challengeSessions)
+      .where(eq(challengeSessions.challengeId, challengeId))
+      .orderBy(challengeSessions.startTime);
+
+    return res.status(200).json({ sessions });
+  } catch (error) {
+    console.error("Get sessions error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 export const joinChallenge = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
@@ -355,6 +425,31 @@ export const getUpcomingChallenges = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+export const getEndedChallenges = async(req: Request, res: Response) => {
+  try {
+    const ended = await db
+     .select({
+        sessionId: challengeSessions.id,
+        challengeId: challenges.id,
+        title: challenges.title,
+        description: challenges.description,
+        difficulty: challenges.difficulty,
+        challengeType: challenges.challengeType,
+        startTime: challengeSessions.startTime,
+        endTime: challengeSessions.endTime,
+        status: challengeSessions.status,
+      })
+      .from(challengeSessions)
+      .innerJoin(challenges, eq(challengeSessions.challengeId, challenges.id))
+      .where(eq(challengeSessions.status, "ENDED"))
+      .orderBy(challengeSessions.endTime);
+      
+      return res.status(200).json({ challenges: ended });
+
+  }catch(error){
+    res.status(500).json({error: "Internal server error"})
+  }
+}
 export const scheduleChallenge = async (req: Request, res: Response) => {
   try {
     console.log("Received body:", req.body);  // ← Add this

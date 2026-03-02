@@ -28,7 +28,7 @@ import clsx from "clsx";
 const mainItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Problems", url: "/recruiter/problems", icon: Code2 },
-  { title: "Challenges", url: "/recruiter/create", icon: Code2 },
+  { title: "Challenges", url: "/recruiter/challenges", icon: Code2 },
   { title: "Users", url: "/users", icon: Users },
   { title: "Contests", url: "/contests", icon: Trophy },
   { title: "Submissions", url: "/submissions", icon: FileText },

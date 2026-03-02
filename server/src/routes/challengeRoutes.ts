@@ -1,27 +1,29 @@
 import { Router } from "express";
 import {
   createChallenge,
-  scheduleChallenge,
-//   publishChallenge,
-//   saveDraft,
+  publishChallenge,
+  getAllChallenges,
+  getChallengeById,
   getLiveChallenges,
   getUpcomingChallenges,
-  publishChallenge,
-  saveDraft,
-  getAllChallenges,
+  getSessionsByChallenge,
+  getEndedChallenges,
 } from "../controllers/challenge.controller.js";
-import { authenticateToken } from "../middleware/auth.middleware.js";
 import { createSession } from "../controllers/session.controller.js";
+import { authenticateToken } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-router.post("/", authenticateToken, createChallenge);
-router.post("/:challengeId/sessions", authenticateToken, createSession);
-router.get("/", getAllChallenges);
-router.post("/schedule", authenticateToken, scheduleChallenge);
-router.patch("/:challengeId/publish", authenticateToken, publishChallenge);
-router.post("/:challengeId/sessions", authenticateToken, scheduleChallenge);
 router.get("/live", getLiveChallenges);
 router.get("/upcoming", getUpcomingChallenges);
+router.get("/ended", getEndedChallenges);
+
+router.get("/", authenticateToken, getAllChallenges);
+router.post("/", authenticateToken, createChallenge);
+router.get("/:challengeId", authenticateToken, getChallengeById);
+router.patch("/:challengeId/publish", authenticateToken, publishChallenge);
+
+router.post("/:challengeId/sessions", authenticateToken, createSession);
+router.get("/:challengeId/sessions", authenticateToken, getSessionsByChallenge);
 
 export default router;

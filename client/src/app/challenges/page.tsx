@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Clock, Target } from "lucide-react";
+import { Clock, Zap, Calendar, ChevronRight, Timer,Radio, Flag } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -29,289 +29,537 @@ export interface Challenge {
   status: "SCHEDULED" | "LIVE" | "ENDED";
 }
 
-const getDifficultyColor = (difficulty: string) => {
-  switch (difficulty) {
-    case "EASY":
-      return "text-green-400 bg-green-400/10 border-green-400/30";
-    case "MEDIUM":
-      return "text-yellow-400 bg-yellow-400/10 border-yellow-400/30";
-    case "HARD":
-      return "text-red-400 bg-red-400/10 border-red-400/30";
-    default:
-      return "text-gray-400 bg-gray-400/10 border-gray-400/30";
-  }
+
+function useCountdown(target: string) {
+  const [display, setDisplay] = useState("");
+  useEffect(() => {
+    const tick = () => {
+      const diff = new Date(target).getTime() - Date.now();
+      if (diff <= 0) {
+        setDisplay("Ended");
+        return;
+      }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setDisplay(h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [target]);
+  return display;
+}
+
+
+const difficultyConfig: Record<string, { label: string; classes: string }> = {
+  EASY: {
+    label: "Easy",
+    classes: "text-emerald-400 bg-emerald-950 border-emerald-800",
+  },
+  MEDIUM: {
+    label: "Medium",
+    classes: "text-amber-400 bg-amber-950 border-amber-800",
+  },
+  HARD: { label: "Hard", classes: "text-red-400 bg-red-950 border-red-800" },
 };
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "LIVE":
-      return "text-green-400 bg-green-400/20 animate-pulse";
-    case "SCHEDULED":
-      return "text-blue-400 bg-blue-400/20";
-    case "ENDED":
-      return "text-gray-400 bg-gray-400/20";
-    default:
-      return "text-gray-400 bg-gray-400/20";
-  }
+const typeConfig: Record<string, { label: string; color: string }> = {
+  FRONTEND: { label: "Frontend", color: "text-violet-400" },
+  BACKEND: { label: "Backend", color: "text-blue-400" },
+  DSA: { label: "DSA", color: "text-cyan-400" },
+  SYSTEM_DESIGN: { label: "System Design", color: "text-orange-400" },
 };
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatTime(dateStr: string) {
+  return new Date(dateStr).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function getDuration(start: string, end: string) {
+  const diff = new Date(end).getTime() - new Date(start).getTime();
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  return h > 0 ? `${h}h ${m > 0 ? `${m}m` : ""}` : `${m}m`;
+}
+
+
+function ChallengeCard({ challenge }: { challenge: Challenge }) {
+  const countdown = useCountdown(
+    challenge.status === "LIVE" ? challenge.endTime : challenge.startTime,
+  );
+  const diff = difficultyConfig[challenge.difficulty] ?? difficultyConfig.EASY;
+  const type = typeConfig[challenge.challengeType] ?? {
+    label: challenge.challengeType,
+    color: "text-slate-400",
+  };
+  const duration = getDuration(challenge.startTime, challenge.endTime);
+
+  return (
+    <Link href={`/challenges/${challenge.challengeId}`}>
+      <div
+        className={`group relative bg-slate-950 border transition-all duration-200 cursor-pointer overflow-hidden
+        ${
+          challenge.status === "LIVE"
+            ? "border-emerald-900/60 hover:border-emerald-700"
+            : challenge.status === "SCHEDULED"
+              ? "border-slate-800 hover:border-blue-800"
+              : "border-slate-900 hover:border-slate-700 opacity-70 hover:opacity-100"
+        }`}
+      >
+        {/* Live top glow bar */}
+        {challenge.status === "LIVE" && (
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
+        )}
+        {challenge.status === "SCHEDULED" && (
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-blue-600/50 to-transparent" />
+        )}
+
+        <div className="p-5">
+          <div className="flex items-start justify-between gap-4">
+            {/* Left — main content */}
+            <div className="flex-1 min-w-0">
+              {/* Status + type row */}
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                {challenge.status === "LIVE" && (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold px-2 py-0.5 bg-emerald-950 border border-emerald-800 text-emerald-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    LIVE
+                  </span>
+                )}
+                {challenge.status === "SCHEDULED" && (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold px-2 py-0.5 bg-blue-950 border border-blue-900 text-blue-400">
+                    <Calendar className="w-3 h-3" />
+                    UPCOMING
+                  </span>
+                )}
+                {challenge.status === "ENDED" && (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 bg-slate-900 border border-slate-800 text-slate-500">
+                    ENDED
+                  </span>
+                )}
+
+                {/* Difficulty */}
+                <span
+                  className={`text-xs font-mono font-bold px-2 py-0.5 border ${diff.classes}`}
+                >
+                  {diff.label}
+                </span>
+
+                {/* Type */}
+                <span className={`text-xs font-mono ${type.color}`}>
+                  {type.label}
+                </span>
+              </div>
+
+              {/* Title */}
+              <h3
+                className={`text-base font-bold mb-1.5 leading-snug transition-colors
+                ${
+                  challenge.status === "LIVE"
+                    ? "text-slate-100 group-hover:text-emerald-300"
+                    : "text-slate-100 group-hover:text-white"
+                }`}
+              >
+                {challenge.title}
+              </h3>
+
+              {/* Description */}
+              {challenge.description && (
+                <p className="text-xs font-mono text-slate-600 line-clamp-1 leading-relaxed">
+                  {challenge.description}
+                </p>
+              )}
+
+              <div className="flex items-center gap-4 mt-3 flex-wrap">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-3 h-3 text-slate-600" />
+                  <span className="text-xs font-mono text-slate-600">
+                    {formatDate(challenge.startTime)} ·{" "}
+                    {formatTime(challenge.startTime)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Timer className="w-3 h-3 text-slate-600" />
+                  <span className="text-xs font-mono text-slate-600">
+                    {duration}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-end gap-3 shrink-0">
+              {challenge.status === "LIVE" && (
+                <div className="text-right">
+                  <p className="text-xs font-mono text-slate-600 mb-0.5">
+                    ends in
+                  </p>
+                  <p className="text-sm font-mono font-bold text-emerald-400">
+                    {countdown}
+                  </p>
+                </div>
+              )}
+              {challenge.status === "SCHEDULED" && (
+                <div className="text-right">
+                  <p className="text-xs font-mono text-slate-600 mb-0.5">
+                    starts in
+                  </p>
+                  <p className="text-sm font-mono font-bold text-blue-400">
+                    {countdown}
+                  </p>
+                </div>
+              )}
+              {challenge.status === "ENDED" && (
+                <div className="text-right">
+                  <p className="text-xs font-mono text-slate-700">
+                    {formatDate(challenge.endTime)}
+                  </p>
+                </div>
+              )}
+
+              {/* CTA */}
+              {challenge.status === "LIVE" && (
+                <span className="inline-flex items-center gap-1 text-xs font-mono font-bold px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white transition-colors">
+                  Join Now <ChevronRight className="w-3 h-3" />
+                </span>
+              )}
+              {challenge.status === "SCHEDULED" && (
+                <span className="inline-flex items-center gap-1 text-xs font-mono px-3 py-1.5 border border-slate-700 text-slate-400 group-hover:border-blue-700 group-hover:text-blue-400 transition-colors">
+                  View Details <ChevronRight className="w-3 h-3" />
+                </span>
+              )}
+              {challenge.status === "ENDED" && (
+                <span className="inline-flex items-center gap-1 text-xs font-mono px-3 py-1.5 border border-slate-800 text-slate-600 group-hover:border-slate-600 group-hover:text-slate-400 transition-colors">
+                  Results <ChevronRight className="w-3 h-3" />
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+
+function SectionHeader({
+  icon,
+  label,
+  count,
+  color,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  count: number;
+  color: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 mb-4">
+      <span className={color}>{icon}</span>
+      <span className="text-sm font-mono font-bold text-slate-300 uppercase tracking-widest">
+        {label}
+      </span>
+      <span className="text-xs font-mono text-slate-600 px-2 py-0.5 bg-slate-900 border border-slate-800">
+        {count}
+      </span>
+    </div>
+  );
+}
+
 
 const ChallengesPage = () => {
-  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>("All");
+  const [selectedDifficulty, setSelectedDifficulty] =
+    useState<Difficulty>("All");
   const [selectedType, setSelectedType] = useState<ChallengeType>("All");
   const [selectedStatus, setSelectedStatus] = useState<Status>("All");
-  
-  // Separate state for each status
+
   const [liveChallenges, setLiveChallenges] = useState<Challenge[]>([]);
   const [upcomingChallenges, setUpcomingChallenges] = useState<Challenge[]>([]);
   const [endedChallenges, setEndedChallenges] = useState<Challenge[]>([]);
-  
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchLiveChallenges = async () => {
+  const fetchLive = async () => {
     try {
-      const response = await axios.get(
+      const res = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/challenge/live`,
-        { withCredentials: true }
+        { withCredentials: true },
       );
-      setLiveChallenges(response.data.challenges || []);
-    } catch (error) {
-      console.error("Error fetching live challenges:", error);
+      setLiveChallenges(res.data.challenges || []);
+    } catch (e) {
+      console.error(e);
     }
   };
 
-  // Fetch UPCOMING challenges (refresh every 30 seconds)
-  const fetchUpcomingChallenges = async () => {
+  const fetchUpcoming = async () => {
     try {
-      const response = await axios.get(
+      const res = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/challenge/upcoming`,
-        { withCredentials: true }
+        { withCredentials: true },
       );
-      setUpcomingChallenges(response.data.challenges || []);
-    } catch (error) {
-      console.error("Error fetching upcoming challenges:", error);
+      setUpcomingChallenges(res.data.challenges || []);
+    } catch (e) {
+      console.error(e);
     }
   };
 
-  // Fetch ENDED challenges (fetch once on load)
-  const fetchEndedChallenges = async () => {
+  const fetchEnded = async () => {
     try {
-      const response = await axios.get(
+      const res = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/challenge/ended`,
-        { withCredentials: true }
+        { withCredentials: true },
       );
-      setEndedChallenges(response.data.challenges || []);
-    } catch (error) {
-      console.error("Error fetching ended challenges:", error);
+      setEndedChallenges(res.data.challenges || []);
+    } catch (e) {
+      console.error(e);
     }
   };
 
-  // Initial load
   useEffect(() => {
-    const loadAll = async () => {
+    const init = async () => {
       setLoading(true);
-      try {
-        await Promise.all([
-          fetchLiveChallenges(),
-          fetchUpcomingChallenges(),
-          fetchEndedChallenges(),
-        ]);
-      } catch (err) {
-        setError("Failed to load challenges");
-      } finally {
-        setLoading(false);
-      }
+      await Promise.all([fetchLive(), fetchUpcoming(), fetchEnded()]);
+      setLoading(false);
     };
+    init();
 
-    loadAll();
-
-    const liveInterval = setInterval(fetchLiveChallenges, 10000);
-
-    // Auto-refresh UPCOMING challenges every 30 seconds
-    const upcomingInterval = setInterval(fetchUpcomingChallenges, 30000);
-
+    const liveInterval = setInterval(fetchLive, 10000);
+    const upcomingInterval = setInterval(fetchUpcoming, 30000);
     return () => {
       clearInterval(liveInterval);
       clearInterval(upcomingInterval);
     };
   }, []);
 
-  // Combine all challenges
-  const allChallenges = [...liveChallenges, ...upcomingChallenges, ...endedChallenges];
+  const allChallenges = [
+    ...liveChallenges,
+    ...upcomingChallenges,
+    ...endedChallenges,
+  ];
 
-  // Filter function
-  const filteredChallenges = allChallenges.filter((challenge) => {
-    const matchesDifficulty =
-      selectedDifficulty === "All" || challenge.difficulty === selectedDifficulty;
-    const matchesType =
-      selectedType === "All" || challenge.challengeType === selectedType;
-    const matchesStatus =
-      selectedStatus === "All" || challenge.status === selectedStatus;
-    
-    return matchesDifficulty && matchesType && matchesStatus;
-  });
+  const applyFilters = (list: Challenge[]) =>
+    list.filter((c) => {
+      const matchesDifficulty =
+        selectedDifficulty === "All" || c.difficulty === selectedDifficulty;
+      const matchesType =
+        selectedType === "All" || c.challengeType === selectedType;
+      return matchesDifficulty && matchesType;
+    });
+
+  const filteredLive = applyFilters(liveChallenges);
+  const filteredUpcoming = applyFilters(upcomingChallenges);
+  const filteredEnded = applyFilters(endedChallenges);
+
+  // When status filter is active — show flat filtered list
+  const isStatusFiltered = selectedStatus !== "All";
+  const flatFiltered = applyFilters(allChallenges).filter(
+    (c) => selectedStatus === "All" || c.status === selectedStatus,
+  );
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mx-auto mb-4"></div>
-          <p className="text-slate-400">Loading challenges...</p>
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-slate-800 border-t-violet-500 rounded-full animate-spin" />
+          <p className="text-xs font-mono text-slate-600 tracking-widest">
+            Loading challenges…
+          </p>
         </div>
       </div>
     );
   }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-red-400">{error}</p>
-      </div>
-    );
-  }
-
-  const ChallengeCard = ({ challenge }: { challenge: Challenge }) => (
-    <Link href={`/challenges/${challenge.challengeId}`} key={challenge.sessionId}>
-      <div className="group relative backdrop-blur border border-gray-900 rounded-lg p-5 transition-all duration-300 hover:shadow-lg cursor-pointer">
-        <div className="flex items-center justify-between mb-3">
-          <span
-            className={`text-xs font-bold px-2 py-1 rounded font-mono ${getStatusColor(
-              challenge.status
-            )}`}
-          >
-            {challenge.status === "LIVE" && "🔴 "}
-            {challenge.status}
-          </span>
-          <span
-            className={`text-xs font-bold px-2 py-1 rounded border font-mono ${getDifficultyColor(
-              challenge.difficulty
-            )}`}
-          >
-            {challenge.difficulty}
-          </span>
-        </div>
-
-        {/* Title */}
-        <h3 className="text-lg font-bold mb-2 group-hover:text-purple-400 transition-colors">
-          {challenge.title}
-        </h3>
-
-        {/* Description */}
-        <p className="text-sm text-slate-400 mb-4 line-clamp-2">
-          {challenge.description}
-        </p>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800">
-          <div className="flex items-center gap-1.5">
-            <Clock className="w-4 h-4 text-blue-400" />
-            <span className="text-xs text-slate-300 font-mono">
-              {new Date(challenge.startTime).toLocaleDateString()}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Target className="w-4 h-4 text-purple-400" />
-            <span className="text-xs text-slate-300 font-mono">
-              {challenge.challengeType}
-            </span>
-          </div>
-        </div>
-
-        {/* Hover Glow */}
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 to-blue-600/0 group-hover:from-purple-600/5 group-hover:to-blue-600/5 rounded-lg transition-all duration-300 pointer-events-none" />
-      </div>
-    </Link>
-  );
 
   return (
-    <div className="min-h-screen p-6">
-      {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <Target className="w-8 h-8 text-purple-400" />
-          <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">
-            CHALLENGES
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="mb-10">
+          <p className="text-xs font-mono text-slate-600 tracking-widest uppercase mb-2">
+            Candidate Dashboard
+          </p>
+          <h1 className="text-3xl font-bold text-slate-100 tracking-tight mb-1">
+            Challenges
           </h1>
+          <p className="text-sm font-mono text-slate-600">
+            {allChallenges.length} total ·{" "}
+            <span className="text-emerald-500">
+              {liveChallenges.length} live
+            </span>{" "}
+            ·{" "}
+            <span className="text-blue-500">
+              {upcomingChallenges.length} upcoming
+            </span>{" "}
+            ·{" "}
+            <span className="text-gray-500">
+              {endedChallenges.length} ended
+            </span>
+          </p>
         </div>
-        <p className="text-slate-400 text-sm font-mono ml-11">
-          Choose your battle and prove your skills
-        </p>
-      </div>
 
-      {/* Filters */}
-      <div className="max-w-7xl mx-auto flex items-center gap-4 mb-6">
-        {/* Status Filter */}
-        <Select
-          value={selectedStatus}
-          onValueChange={(e) => setSelectedStatus(e as Status)}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="All">All Status</SelectItem>
-              <SelectItem value="LIVE">🔴 Live</SelectItem>
-              <SelectItem value="SCHEDULED">📅 Upcoming</SelectItem>
-              <SelectItem value="ENDED">🏁 Ended</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        {/* Filters */}
+        <div className="flex items-center gap-3 mb-8 flex-wrap">
+          <Select
+            value={selectedStatus}
+            onValueChange={(v) => setSelectedStatus(v as Status)}
+          >
+            <SelectTrigger className="w-36 bg-slate-900 border-slate-800 text-slate-300 text-xs font-mono">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="All">
+                  <div className="flex items-center gap-2">
+                    <Radio className="h-4 w-4" />
+                    <span>All Status</span>
+                  </div>
+                </SelectItem>
 
-        {/* Difficulty Filter */}
-        <Select
-          value={selectedDifficulty}
-          onValueChange={(e) => setSelectedDifficulty(e as Difficulty)}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Difficulty" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="All">All Difficulties</SelectItem>
-              <SelectItem value="EASY">Easy</SelectItem>
-              <SelectItem value="MEDIUM">Medium</SelectItem>
-              <SelectItem value="HARD">Hard</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+                <SelectItem value="LIVE">
+                  <div className="flex items-center gap-2">
+                    <Radio className="h-4 w-4 text-red-500" />
+                    <span>Live</span>
+                  </div>
+                </SelectItem>
 
-        {/* Type Filter */}
-        <Select
-          value={selectedType}
-          onValueChange={(e) => setSelectedType(e as ChallengeType)}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="All">All Types</SelectItem>
-              <SelectItem value="FRONTEND">Frontend</SelectItem>
-              <SelectItem value="BACKEND">Backend</SelectItem>
-              <SelectItem value="DSA">DSA</SelectItem>
-              <SelectItem value="SYSTEM_DESIGN">System Design</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+                <SelectItem value="SCHEDULED">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-blue-500" />
+                    <span>Upcoming</span>
+                  </div>
+                </SelectItem>
 
-        {/* Results Count */}
-        <div className="ml-auto text-sm text-slate-400 font-mono">
-          Showing <span className="text-purple-400 font-bold">{filteredChallenges.length}</span> of {allChallenges.length} challenges
+                <SelectItem value="ENDED">
+                  <div className="flex items-center gap-2">
+                    <Flag className="h-4 w-4 text-gray-500" />
+                    <span>Ended</span>
+                  </div>
+                </SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={selectedDifficulty}
+            onValueChange={(v) => setSelectedDifficulty(v as Difficulty)}
+          >
+            <SelectTrigger className="w-36 bg-slate-900 border-slate-800 text-slate-300 text-xs font-mono">
+              <SelectValue placeholder="Difficulty" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="All">All Levels</SelectItem>
+                <SelectItem value="EASY">Easy</SelectItem>
+                <SelectItem value="MEDIUM">Medium</SelectItem>
+                <SelectItem value="HARD">Hard</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={selectedType}
+            onValueChange={(v) => setSelectedType(v as ChallengeType)}
+          >
+            <SelectTrigger className="w-40 bg-slate-900 border-slate-800 text-slate-300 text-xs font-mono">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="All">All Types</SelectItem>
+                <SelectItem value="FRONTEND">Frontend</SelectItem>
+                <SelectItem value="BACKEND">Backend</SelectItem>
+                <SelectItem value="DSA">DSA</SelectItem>
+                <SelectItem value="SYSTEM_DESIGN">System Design</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
+          <span className="ml-auto text-xs font-mono text-slate-600">
+            {isStatusFiltered ? flatFiltered.length : allChallenges.length}{" "}
+            results
+          </span>
         </div>
-      </div>
 
-      {/* Challenge Grid */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 gap-4">
-        {filteredChallenges.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            <p className="text-lg">No challenges found</p>
-            <p className="text-sm">Try adjusting your filters</p>
+        {isStatusFiltered ? (
+          <div className="flex flex-col gap-3">
+            {flatFiltered.length === 0 ? (
+              <div className="text-center py-16 text-slate-700 font-mono text-sm">
+                No {selectedStatus.toLowerCase()} challenges found
+              </div>
+            ) : (
+              flatFiltered.map((c) => (
+                <ChallengeCard key={c.sessionId} challenge={c} />
+              ))
+            )}
           </div>
         ) : (
-          filteredChallenges.map((challenge) => (
-            <ChallengeCard key={challenge.sessionId} challenge={challenge} />
-          ))
+          <div className="flex flex-col gap-10">
+            {filteredLive.length > 0 && (
+              <section>
+                <SectionHeader
+                  icon={<Zap className="w-4 h-4" />}
+                  label="Live Now"
+                  count={filteredLive.length}
+                  color="text-emerald-400"
+                />
+                <div className="flex flex-col gap-3">
+                  {filteredLive.map((c) => (
+                    <ChallengeCard key={c.sessionId} challenge={c} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Upcoming */}
+            {filteredUpcoming.length > 0 && (
+              <section>
+                <SectionHeader
+                  icon={<Calendar className="w-4 h-4" />}
+                  label="Upcoming"
+                  count={filteredUpcoming.length}
+                  color="text-blue-400"
+                />
+                <div className="flex flex-col gap-3">
+                  {filteredUpcoming.map((c) => (
+                    <ChallengeCard key={c.sessionId} challenge={c} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Ended */}
+            {filteredEnded.length > 0 && (
+              <section>
+                <SectionHeader
+                  icon={<Clock className="w-4 h-4" />}
+                  label="Past Challenges"
+                  count={filteredEnded.length}
+                  color="text-slate-500"
+                />
+                <div className="flex flex-col gap-3">
+                  {filteredEnded.map((c) => (
+                    <ChallengeCard key={c.sessionId} challenge={c} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {filteredLive.length === 0 &&
+              filteredUpcoming.length === 0 &&
+              filteredEnded.length === 0 && (
+                <div className="text-center py-16 text-slate-700 font-mono text-sm">
+                  No challenges match your filters
+                </div>
+              )}
+          </div>
         )}
       </div>
     </div>
