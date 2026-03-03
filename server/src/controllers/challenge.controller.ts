@@ -368,18 +368,11 @@ export const getSessionsByChallenge = async (req: Request, res: Response) => {
 export const joinChallenge = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
-    const sessionIdParam = req.params.sessionId;
+    const sessionId = Array.isArray(req.params.sessionId) ? req.params.sessionId[0] : req.params.sessionId;
 
-    if (!userId) {
-      return res.status(401).json({ error: "User not authenticated" });
+    if(!sessionId || !userId) {
+      return res.status(401).json({error: "sessionId and userId is required"});
     }
-
-    if (!sessionIdParam || Array.isArray(sessionIdParam)) {
-      return res.status(400).json({ error: "Invalid session ID" });
-    }
-
-    const sessionId = sessionIdParam as string;
-
     const [session] = await db
       .select()
       .from(challengeSessions)
@@ -387,18 +380,14 @@ export const joinChallenge = async (req: Request, res: Response) => {
       .limit(1);
 
     if (!session) {
-      return res.status(404).json({ error: "Challenge session not found" });
+      return res.status(404).json({ error: "Session not found" });
     }
 
-    if (session.status !== "LIVE") {
-      return res.status(400).json({ error: "Challenge is not currently live" });
+    if (session.status === "ENDED") {
+      return res.status(400).json({ error: "Session has ended" });
     }
 
-    if (new Date() > new Date(session.endTime)) {
-      return res.status(400).json({ error: "Challenge session has ended" });
-    }
-
-    const [existingParticipation] = await db
+    const [existing] = await db
       .select()
       .from(sessionParticipants)
       .where(
@@ -409,8 +398,12 @@ export const joinChallenge = async (req: Request, res: Response) => {
       )
       .limit(1);
 
-    if (existingParticipation) {
-      return res.status(409).json({ error: "Already joined this challenge" });
+    if (existing) {
+      return res.status(200).json({
+        message: "Already registered",
+        participant: existing,
+        session,
+      });
     }
 
     const [participant] = await db
@@ -418,24 +411,17 @@ export const joinChallenge = async (req: Request, res: Response) => {
       .values({
         sessionId,
         userId,
-        startedAt: new Date(),
+        startedAt: session.status === "LIVE" ? new Date() : null, // only set if LIVE
       })
       .returning();
 
-    const [challenge] = await db
-      .select()
-      .from(challenges)
-      .where(eq(challenges.id, session.challengeId))
-      .limit(1);
-
     return res.status(200).json({
-      message: "Successfully joined challenge",
+      message: session.status === "LIVE" ? "Joined successfully" : "Registered successfully",
+      participant,
       session,
-      challenge,
-      participation: participant,
     });
   } catch (error) {
-    console.error("Join challenge error:", error);
+    console.error("Join error:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -641,4 +627,24 @@ export const saveDraft = async (req: Request, res: Response) => {
     console.error("Save draft error:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
+};
+
+export const checkParticipant = async (req:Request, res: Response) => {
+    const userId = req.user?.userId;
+    const sessionId = Array.isArray(req.params.sessionId) ? req.params.sessionId[0] : req.params.sessionId;
+
+    if(!sessionId || !userId) {
+      return res.status(401).json({error: "sessionId and userId is required"});
+    }
+
+  const [participant] = await db
+    .select()
+    .from(sessionParticipants)
+    .where(and(
+      eq(sessionParticipants.sessionId, sessionId),
+      eq(sessionParticipants.userId, userId)
+    ))
+    .limit(1);
+
+  return res.status(200).json({ isRegistered: !!participant });
 };

@@ -9,7 +9,6 @@ import {
   Settings,
   Zap,
   Tags,
-  User2,
 } from "lucide-react";
 import {
   Sidebar,
