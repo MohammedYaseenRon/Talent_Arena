@@ -5,7 +5,6 @@ import authRoutes from "./routes/authRoutes.js";
 import challengeRoutes from "./routes/challengeRoutes.js";
 
 import cookie from "cookie-parser";
-import { startChallengeScheduler } from "./jobs/challengeScheduler.js";
 import { startCronJobs } from "./services/cron.service.js";
 
 const app = express();
@@ -15,7 +14,7 @@ const PORT = Number(process.env.PORT) || 4001;
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://app.ronyx.xyz"],
+    origin: ["http://localhost:3000"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],

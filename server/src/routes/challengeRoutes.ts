@@ -11,9 +11,11 @@ import {
   getChallenegeInstruction,
   joinChallenge,
   checkParticipant,
+  getAttemptData,
 } from "../controllers/challenge.controller.js";
 import { createSession } from "../controllers/session.controller.js";
 import { authenticateToken } from "../middleware/auth.middleware.js";
+import { uploadDesignImages } from "../middleware/upload.middleware.js";
 
 const router = Router();
 
@@ -22,8 +24,9 @@ router.get("/upcoming", getUpcomingChallenges);
 router.get("/ended", getEndedChallenges);
 
 router.get("/", authenticateToken, getAllChallenges);
-router.post("/", authenticateToken, createChallenge);
+router.post("/", uploadDesignImages, authenticateToken, createChallenge);
 router.get("/:challengeId", authenticateToken, getChallengeById);
+router.get("/:challengeId/attempt-data", authenticateToken, getAttemptData);
 router.get("/:challengeId/instructions", authenticateToken, getChallenegeInstruction);
 router.patch("/:challengeId/publish", authenticateToken, publishChallenge);
 

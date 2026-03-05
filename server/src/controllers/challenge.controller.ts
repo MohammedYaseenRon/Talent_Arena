@@ -16,6 +16,7 @@ export const createChallenge = async (req: Request, res: Response) => {
     const { title, description, difficulty, challengeType, frontendDetails } =
       req.body;
     const createdBy = req.user?.userId ?? req.body.createdBy;
+
     if (!title || !difficulty || !challengeType || !createdBy) {
       return res.status(400).json({ error: "All fields are required" });
     }
@@ -43,12 +44,13 @@ export const createChallenge = async (req: Request, res: Response) => {
       .select()
       .from(challenges)
       .where(
-        and(eq(challenges.title, title), eq(challenges.createdBy, createdBy)),
+        and(eq(challenges.title, title), eq(challenges.createdBy, createdBy))
       );
 
     if (existingChallenge) {
       return res.status(409).json({ error: "Challenge already exists" });
     }
+
     const [draft] = await db
       .insert(challenges)
       .values({
@@ -59,11 +61,16 @@ export const createChallenge = async (req: Request, res: Response) => {
         createdBy,
       })
       .returning();
+
     if (!draft) {
       return res.status(500).json({ error: "Failed to draft challenge" });
     }
 
     if (challengeType === "FRONTEND" && frontendDetails) {
+      // Get uploaded image URLs from multer middleware
+      const files = req.files as Express.Multer.File[];
+      const designImages = files?.map((f: any) => f.path) ?? [];
+
       const [frontendData] = await db
         .insert(frontendChallenges)
         .values({
@@ -72,7 +79,7 @@ export const createChallenge = async (req: Request, res: Response) => {
           features: frontendDetails.features || null,
           optionalRequirements: frontendDetails.optionalRequirements || null,
           apiDetails: frontendDetails.apiDetails || null,
-          designReference: frontendDetails.designReference || null,
+          designImages: designImages.length > 0 ? designImages : null, // ← changed
           submissionInstructions: frontendDetails.submissionInstructions,
           techConstraints: frontendDetails.techConstraints || null,
           starterCode: frontendDetails.starterCode || null,
@@ -80,13 +87,14 @@ export const createChallenge = async (req: Request, res: Response) => {
           allowedLanguages: frontendDetails.allowedLanguages || null,
         })
         .returning();
-        return res.status(201).json({
-          message: "Frontend challenge created",
-          challenge: {
-            ...draft,
-            frontendDetails: frontendData,
-          },
-        });
+
+      return res.status(201).json({
+        message: "Frontend challenge created",
+        challenge: {
+          ...draft,
+          frontendDetails: frontendData,
+        },
+      });
     }
 
     return res.status(201).json({
@@ -293,7 +301,7 @@ export const getChallenegeInstruction = async(req: Request, res: Response) => {
 
     const [result] = await db
     .select({
-      challengeId: challenges.id,
+        challengeId: challenges.id,
         title: challenges.title,
         description: challenges.description,
         difficulty: challenges.difficulty,
@@ -648,3 +656,120 @@ export const checkParticipant = async (req:Request, res: Response) => {
 
   return res.status(200).json({ isRegistered: !!participant });
 };
+
+export const getAttemptData = async(req: Request, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const challengeId = Array.isArray(req.params.challengeId) 
+      ? req.params.challengeId[0] 
+      : req.params.challengeId;
+    const sessionId = req.query.session as string;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+
+    if(!challengeId || !sessionId){
+      return res.status(400).json({error: "challengeId and sessionId required"});
+    }
+
+    const [participant] = await db
+    .select()
+    .from(sessionParticipants)
+    .where(
+      and(
+        eq(sessionParticipants.sessionId, sessionId),
+        eq(sessionParticipants.userId, userId)
+      )
+    )
+    .limit(1);
+
+    if (!participant) {
+      return res.status(403).json({ error: "Not registered for this session" });
+    }
+
+    const [session] = await db
+    .select()
+    .from(challengeSessions)
+    .where(eq(challengeSessions.id, sessionId))
+    .limit(1)
+
+
+    if(!session){
+      return res.status(404).json({ error: "Session not found" });
+    }
+      if (session.status === "ENDED") {
+      return res.status(403).json({ error: "Session has ended" });
+    }
+
+    if (session.status === "SCHEDULED") {
+      return res.status(403).json({ error: "Session has not started yet" });
+    }
+
+    const [challenge] = await db
+      .select()
+      .from(challenges)
+      .where(eq(challenges.id, challengeId))
+      .limit(1);
+
+    if (!challenge) {
+      return res.status(404).json({ error: "Challenge not found" });
+    }
+
+     if (challenge.isDraft) {
+      return res.status(403).json({ error: "Challenge not available" });
+    }
+    const [frontendContent] = await db
+      .select()
+      .from(frontendChallenges)
+      .where(eq(frontendChallenges.challengeId, challengeId))
+      .limit(1);
+
+    if (!frontendContent) {
+      return res.status(404).json({ error: "Challenge content not found" });
+    }
+
+    if (!participant.startedAt) {
+      await db
+        .update(sessionParticipants)
+        .set({ startedAt: new Date() })
+        .where(
+          and(
+            eq(sessionParticipants.sessionId, sessionId),
+            eq(sessionParticipants.userId, userId)
+          )
+        );
+    }
+
+    return res.status(200).json({
+      challenge: {
+        challengeId: challenge.id,
+        title: challenge.title,
+        description: challenge.description,
+        difficulty: challenge.difficulty,
+        challengeType: challenge.challengeType,
+        content: {
+          taskDescription: frontendContent.taskDescription,
+          features: frontendContent.features,
+          optionalRequirements: frontendContent.optionalRequirements,
+          apiDetails: frontendContent.apiDetails,
+          designImages: frontendContent.designImages ?? null,
+          submissionInstructions: frontendContent.submissionInstructions,
+          techConstraints: frontendContent.techConstraints,
+          starterCode: frontendContent.starterCode,
+          allowedLanguages: frontendContent.allowedLanguages,
+        },
+      },
+      session: {
+        sessionId: session.id,
+        startTime: session.startTime,
+        endTime: session.endTime,
+        status: session.status,
+      },
+    });
+  }catch(error) {
+    console.error("Get attempt data error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+}

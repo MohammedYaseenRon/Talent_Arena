@@ -1,1 +1,1 @@
-ALTER TABLE "challenge_sessions" ADD COLUMN "updated_at" timestamp DEFAULT now() NOT NULL;
+-- ALTER TABLE "challenge_sessions" ADD COLUMN "updated_at" timestamp DEFAULT now() NOT NULL;a

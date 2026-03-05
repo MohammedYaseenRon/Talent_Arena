@@ -88,7 +88,7 @@ export const registration = async (req: Request, res: Response) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ← ADD THIS
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/api/auth",
+      path: "/",
     });
 
     return res.status(201).json({
@@ -185,7 +185,7 @@ export const recruiterRegistration = async (req: Request, res: Response) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ← ADD THIS
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/api/auth",
+      path: "/",
     });
 
     return res.status(201).json({
@@ -267,7 +267,7 @@ export const login = async (req: Request, res: Response) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ← ADD THIS
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/api/auth",
+      path: "/",
     });
 
     return res.status(200).json({

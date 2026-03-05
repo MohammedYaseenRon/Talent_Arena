@@ -6,6 +6,21 @@ const api = axios.create({
 });
 
 let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: any) => void;
+  reject: (reason?: any) => void;
+}> = [];
+
+const processQueue = (error: any) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve();
+    }
+  });
+  failedQueue = [];
+};
 
 api.interceptors.response.use(
   (response) => response,
@@ -21,19 +36,27 @@ api.interceptors.response.use(
     }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) return Promise.reject(error);
-
       originalRequest._retry = true;
+
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => api(originalRequest))  // retry after refresh
+          .catch((err) => Promise.reject(err));
+      }
+
       isRefreshing = true;
 
       try {
         await api.post("/auth/refresh");
-        isRefreshing = false;
+        processQueue(null);      
         return api(originalRequest);
       } catch (refreshError) {
-        isRefreshing = false;
+        processQueue(refreshError);
         window.location.href = "/login";
         return Promise.reject(refreshError);
+      } finally { 
       }
     }
 

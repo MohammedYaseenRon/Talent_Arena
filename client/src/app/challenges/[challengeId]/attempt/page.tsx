@@ -1,6 +1,8 @@
 "use client";
 
 import { ChallengeSidebar } from "@/components/recruiter/SideBarModal";
+import api from "@/lib/axios";
+import { AttemptChallenge } from "@/types";
 import {
   SandpackProvider,
   SandpackFileExplorer,
@@ -16,6 +18,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 
 // ─── Dropdown Menu ───────────────────────────────────────────────
@@ -230,6 +233,8 @@ function EditorArea({
 }
 
 export default function Attempt() {
+  const params = useParams();
+  const searchParams = useSearchParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isFileExplorerOpen, setIsFileExplorerOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -237,17 +242,52 @@ export default function Attempt() {
     top: 0,
     right: 0,
   });
+  const API = process.env.NEXT_PUBLIC_API_URL;
+  const challengeId = params.challengeId as string;
+  const sessionId = searchParams.get("session") as string;
+  const [challengeDetail, setChallengeDetail] = useState<AttemptChallenge | null>(null);
+  const [session, setSession] = useState([]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-  const challenge = {
-    title: "Build a Todo App",
-    difficulty: "medium",
-    challengeType: "FRONTEND",
-    description:
-      "Create a fully functional todo application with add, edit, delete, and filter capabilities.",
-    createdAt: "2026-02-21T10:30:00Z",
-    tags: ["React", "TypeScript", "Tailwind"],
-    candidates: 5,
-  };
+  const load = async() => {
+    try {
+      const res = await api.get(`${API}/challenge/${challengeId}/attempt-data?session=${sessionId}`);
+      setChallengeDetail(res.data.challenge)
+      setSession(res.data.session);
+    }catch (err: any) {
+        const status = err?.response?.status;
+        const message = err?.response?.data?.error;
+
+        if (status === 401) {
+          router.replace("/login");
+          return;
+        }
+        if (status === 403) {
+          router.replace(`/challenges/${challengeId}/instructions?session=${sessionId}`);
+          return;
+        }
+        setError(message || "Failed to load challenge");
+      }finally{
+        setLoading(false);
+      }
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  // const challenge = {
+  //   title: "Build a Todo App",
+  //   difficulty: "medium",
+  //   challengeType: "FRONTEND",
+  //   description:
+  //     "Create a fully functional todo application with add, edit, delete, and filter capabilities.",
+  //   createdAt: "2026-02-21T10:30:00Z",
+  //   tags: ["React", "TypeScript", "Tailwind"],
+  //   candidates: 5,
+  // };
 
   const toggleFileExplorer = () => {
     setIsFileExplorerOpen(!isFileExplorerOpen);
@@ -275,6 +315,19 @@ export default function Attempt() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+   if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-slate-800 border-t-slate-400 rounded-full animate-spin" />
+          <p className="text-xs font-mono text-slate-600 tracking-widest">
+            Loading challenge…
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen w-screen flex overflow-hidden bg-gray-950">
       {!isSidebarOpen && (
@@ -294,7 +347,7 @@ export default function Attempt() {
         `}
       >
         <div className="h-full w-64 md:w-72 relative">
-          <ChallengeSidebar challenge={challenge} />
+          <ChallengeSidebar challenge={challengeDetail!} />
 
           <button
             onClick={() => setIsSidebarOpen(false)}
@@ -306,12 +359,13 @@ export default function Attempt() {
         </div>
       </div>
 
+      
       <SandpackProvider
         theme="dark"
         template="react"
         style={{ display: "flex", flex: 1, minWidth: 0, height: "100%" }}
       >
-        <div className="flex-1 flex h-full min-w-0">
+        <div className="flex-1 flex h-full min-w-0 overflow-hidden">
           <div
             className={`
                 h-full border-r border-gray-700 overflow-y-auto bg-gray-900 flex-shrink-0
@@ -323,7 +377,7 @@ export default function Attempt() {
           </div>
 
           <EditorArea onMoreClick={handleMoreClick} />
-          <div className="basis-1/2 flex-1 h-full border-l border-gray-700 min-w-0">
+          <div className="flex-1 h-full border-l border-gray-700 min-w-0 overflow-hidden">
             <SandpackPreview
               showRefreshButton={true}
               showOpenInCodeSandbox={false}
@@ -340,6 +394,8 @@ export default function Attempt() {
           position={dropdownPosition}
         />
       </SandpackProvider>
+
+
     </div>
   );
 }

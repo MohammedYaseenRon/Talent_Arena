@@ -111,7 +111,7 @@ export const frontendChallenges = pgTable("challenge_frontend", {
   features: text("features"),
   optionalRequirements: text("optional_requirements"),
   apiDetails: text("api_details"),
-  designReference: varchar("design_reference", { length: 500 }),
+  designImages: jsonb("design_images").$type<string[]>(),
   submissionInstructions: text("submission_instructions").notNull(),
   techConstraints: text("tech_constraints"),
   starterCode: text("starter_code"),

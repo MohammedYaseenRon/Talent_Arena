@@ -313,9 +313,7 @@ const ChallengesPage = () => {
   const fetchLive = async () => {
     try {
       const res = await api.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/challenge/live`,
-        { withCredentials: true },
-      );
+        `${process.env.NEXT_PUBLIC_API_URL}/challenge/live`);
       setLiveChallenges(res.data.challenges || []);
     } catch (e) {
       console.error(e);
@@ -325,9 +323,7 @@ const ChallengesPage = () => {
   const fetchUpcoming = async () => {
     try {
       const res = await api.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/challenge/upcoming`,
-        { withCredentials: true },
-      );
+        `${process.env.NEXT_PUBLIC_API_URL}/challenge/upcoming`);
       setUpcomingChallenges(res.data.challenges || []);
     } catch (e) {
       console.error(e);
@@ -337,9 +333,7 @@ const ChallengesPage = () => {
   const fetchEnded = async () => {
     try {
       const res = await api.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/challenge/ended`,
-        { withCredentials: true },
-      );
+        `${process.env.NEXT_PUBLIC_API_URL}/challenge/ended`);
       setEndedChallenges(res.data.challenges || []);
     } catch (e) {
       console.error(e);
