@@ -10,6 +10,7 @@ import {
   uniqueIndex,
   jsonb,
 } from "drizzle-orm/pg-core";
+import { number } from "zod";
 export const userRoleEnum = pgEnum("user_role", ["USER", "RECRUITER", "ADMIN"]);
 export const challengeDifficultyEnum = pgEnum("challenge_difficulty", [
   "EASY",
@@ -185,6 +186,19 @@ export const submissions = pgTable("submissions", {
   runTimeMs: integer("runtime_ms"),
   memoryMb: integer("memory_mb"),
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
+  allScore: integer("ai_score"),
+  allSummary: text("ai_summary"),
+  aiBreakDown: jsonb("ai_breakdown").$type<{
+    requirements: number;
+    codequality: number;
+    features: number;
+    optionalFeatures: number;
+  }>(),
+  aiStrengths: jsonb("ai_strengths").$type<string[]>(),
+  aiImprovements: jsonb("ai_improvements").$type<string[]>(),
+  featuresCompleted: jsonb("features_completed").$type<string[]>(),
+  featuresMissing: jsonb("features_missing").$type<string[]>(),
+  evaluatedAt: timestamp("evaluated_at"),
 });
 
 export const refreshTokens = pgTable("refresh_tokens", {

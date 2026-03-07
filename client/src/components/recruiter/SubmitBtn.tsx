@@ -22,12 +22,14 @@ function SubmitBtn({
   const handleSubmit = async () => {
     setShowConfirm(false);
     setStatus("loading");
+
+    // const { files } = sandpack;
     try {
       const response = await api.post(
         `${API}/challenge/${challengeId}/submit`,
         {
           sessionId,
-          // files: sandpack.files
+        //   files: sandpack.files
         },
       );
       setStatus("success");
