@@ -1,6 +1,8 @@
 "use client";
 
 import { ChallengeSidebar } from "@/components/recruiter/SideBarModal";
+import SubmitBtn from "@/components/recruiter/SubmitBtn";
+import Timer from "@/components/recruiter/Timer";
 import api from "@/lib/axios";
 import { AttemptChallenge } from "@/types";
 import {
@@ -73,7 +75,82 @@ function MoreOptionsDropdown({
   );
 }
 
-function EditorTabs({ onMoreClick }: { onMoreClick: (e: React.MouseEvent) => void }) {
+
+
+function TopBar({
+  challengeId,
+  sessionId,
+  durationMinutes,
+  onMoreClick,
+  openTabs,
+  activeFile,
+  onTabClick, 
+  onTabClose
+}: {
+  challengeId: string;
+  sessionId: string;
+  durationMinutes: number;
+  onMoreClick: (e: React.MouseEvent) => void;
+  openTabs: string[];
+  activeFile: string;
+  onTabClick: (path: string) => void;
+  onTabClose: (path: string) => void;
+}) {
+  return (
+    <div className="flex items-center bg-gray-900 border-b border-gray-700 h-9 flex-shrink-0 absolute top-0 left-0 right-0 z-10">
+       <div className="flex items-center overflow-x-auto flex-1 scrollbar-none h-full">
+        {openTabs.length === 0 ? (
+          <div className="px-4 text-xs text-gray-500 italic">
+            No files open — select a file from the explorer
+          </div>
+        ) : (
+          openTabs.map((path) => (
+            <div
+              key={path}
+              onClick={() => onTabClick(path)}
+              className={`
+                flex items-center gap-2 h-full text-sm px-4 border-r border-gray-700
+                cursor-pointer whitespace-nowrap select-none
+                ${activeFile === path ? "bg-gray-800 text-white" : "bg-gray-900 text-gray-400 hover:bg-gray-800/60"}
+              `}
+            >
+              <span>{path.split("/").pop()}</span>
+              <button
+                onClick={(e) => { e.stopPropagation(); onTabClose(path); }}
+                className="hover:text-white rounded-sm hover:bg-gray-700 p-0.5"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 px-2 flex-shrink-0 border-l border-gray-700 h-full">
+        <Timer durationMinutes={durationMinutes} />
+        <SubmitBtn challengeId={challengeId} sessionId={sessionId} />
+        <button
+          onClick={onMoreClick}
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-800 transition-colors"
+        >
+          <MoreVertical size={14} className="text-gray-400" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function EditorWithTopBar({
+  onMoreClick,
+  challengeId,
+  sessionId,
+  durationMinutes,
+}: {
+  onMoreClick: (e: React.MouseEvent) => void;
+  challengeId: string;
+  sessionId: string;
+  durationMinutes: number;
+}) {
   const { sandpack } = useSandpack();
   const { activeFile } = sandpack;
   const [openTabs, setOpenTabs] = useState<string[]>([activeFile]);
@@ -97,40 +174,26 @@ function EditorTabs({ onMoreClick }: { onMoreClick: (e: React.MouseEvent) => voi
   };
 
   return (
-    <div className="flex items-center bg-gray-900 border-b border-gray-700 h-9 flex-shrink-0 absolute top-0 left-0 right-0 z-10">
-      <div className="flex items-center overflow-x-auto flex-1 scrollbar-none">
-        {openTabs.length === 0 ? (
-          <div className="px-4 py-2 text-xs text-gray-500 italic">
-            No files open — select a file from the explorer
-          </div>
-        ) : (
-          openTabs.map((path) => (
-            <div
-              key={path}
-              onClick={() => sandpack.setActiveFile(path)}
-              className={`
-                flex items-center gap-2 h-9 text-sm px-4 border-r border-gray-700 
-                cursor-pointer whitespace-nowrap select-none
-                ${activeFile === path ? "bg-gray-800 text-white" : "bg-gray-900 text-gray-400 hover:bg-gray-800/60"}
-              `}
-            >
-              <span>{path.split("/").pop()}</span>
-              <button
-                onClick={(e) => { e.stopPropagation(); closeTab(path); }}
-                className="hover:text-white rounded-sm hover:bg-gray-700 p-0.5"
-              >
-                <X size={12} />
-              </button>
-            </div>
-          ))
-        )}
+    <div style={{ flex: 1, height: "100%", display: "flex", flexDirection: "column", position: "relative", minWidth: 0 }}>
+      <TopBar
+        challengeId={challengeId}
+        sessionId={sessionId}
+        durationMinutes={durationMinutes}
+        onMoreClick={onMoreClick}
+        openTabs={openTabs}
+        activeFile={activeFile}
+        onTabClick={(path) => sandpack.setActiveFile(path)}
+        onTabClose={closeTab}
+      />
+      <div style={{ flex: 1, marginTop: "40px", overflow: "hidden" }}>
+        <SandpackCodeEditor
+          showTabs={false}
+          showLineNumbers={true}
+          showInlineErrors={true}
+          wrapContent={true}
+          style={{ height: "100%" }}
+        />
       </div>
-      <button
-        onClick={onMoreClick}
-        className="flex items-center justify-center w-9 h-full border-l border-gray-700 hover:bg-gray-800 transition-colors flex-shrink-0"
-      >
-        <MoreVertical size={14} className="text-gray-400" />
-      </button>
     </div>
   );
 }
@@ -150,6 +213,11 @@ export default function Attempt() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  const [editorFlex, setEditorFlex] = useState(50); // percentage
+
+
 
   const load = async () => {
     try {
@@ -186,6 +254,7 @@ export default function Attempt() {
     setDropdownPosition({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
     setIsDropdownOpen(!isDropdownOpen);
   };
+  const durationMinutes = (session as any)?.duration ?? 60;
 
   if (loading) {
     return (
@@ -245,24 +314,28 @@ export default function Attempt() {
             )}
 
             {/* Editor */}
-            <div style={{ flex: 1, height: "100%", display: "flex", flexDirection: "column", position: "relative", minWidth: 0 }}>
-              <EditorTabs onMoreClick={handleMoreClick} />
-              <div style={{ flex: 1, marginTop: "36px", overflow: "hidden" }}>
-                <SandpackCodeEditor
-                  showTabs={false}
-                  showLineNumbers={true}
-                  showInlineErrors={true}
-                  wrapContent={true}
-                  style={{ height: "100%" }}
+              <div ref={containerRef} style={{ display: "flex", flex: 1, height: "100%", minWidth: 0 }}>
+              <div style={{ width: `${editorFlex}%`, height: "100%", display: "flex", flexDirection: "column", position: "relative", minWidth: 0 }}>
+                <EditorWithTopBar
+                  onMoreClick={handleMoreClick}
+                  challengeId={challengeId}
+                  sessionId={sessionId}
+                  durationMinutes={durationMinutes}
+                />
+              </div>
+
+              {/* ✅ Drag handle */}
+              {/* <ResizableDivider onResize={handleResize} /> */}
+
+              {/* ✅ Preview with remaining width */}
+              <div style={{ flex: 1, height: "100%", minWidth: 0, overflow: "hidden" }}>
+                <SandpackPreview
+                  showRefreshButton={true}
+                  showOpenInCodeSandbox={false}
+                  style={{ height: "100%", width: "100%" }}
                 />
               </div>
             </div>
-
-            <SandpackPreview
-              showRefreshButton={true}
-              showOpenInCodeSandbox={false}
-              style={{ flex: 1, height: "100%", minWidth: 0 }}
-            />
 
           </SandpackLayout>
 
