@@ -6,6 +6,7 @@ import {
   frontendChallenges,
   recruiterProfiles,
   sessionParticipants,
+  submissions,
   users,
 } from "../db/schema.js";
 import { and, eq } from "drizzle-orm";
@@ -654,7 +655,17 @@ export const checkParticipant = async (req:Request, res: Response) => {
     ))
     .limit(1);
 
-  return res.status(200).json({ isRegistered: !!participant });
+    const [submission] = await db
+    .select()
+    .from(submissions)
+    .where(
+      and(
+        eq(submissions.sessionId, sessionId),
+        eq(submissions.userId, userId)
+      )
+    )
+    .limit(1)
+  return res.status(200).json({ isRegistered: !!participant, hasSubmitted: !!submission});
 };
 
 export const getAttemptData = async(req: Request, res: Response) => {

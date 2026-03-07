@@ -186,8 +186,8 @@ export const submissions = pgTable("submissions", {
   runTimeMs: integer("runtime_ms"),
   memoryMb: integer("memory_mb"),
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
-  allScore: integer("ai_score"),
-  allSummary: text("ai_summary"),
+  aiScore: integer("ai_score"),
+  aiSummary: text("ai_summary"),
   aiBreakDown: jsonb("ai_breakdown").$type<{
     requirements: number;
     codequality: number;

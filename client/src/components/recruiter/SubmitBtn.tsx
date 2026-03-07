@@ -3,6 +3,7 @@
 import api from "@/lib/axios";
 import { useSandpack } from "@codesandbox/sandpack-react";
 import { CheckCircle, Loader2, Send } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 function SubmitBtn({
@@ -12,32 +13,48 @@ function SubmitBtn({
   challengeId: string;
   sessionId: string;
 }) {
-  const sandpack = useSandpack();
+  const { sandpack } = useSandpack();
+  const { files } = sandpack;
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [showConfirm, setShowConfirm] = useState(false);
   const API = process.env.NEXT_PUBLIC_API_URL;
+  const router = useRouter();
 
   const handleSubmit = async () => {
     setShowConfirm(false);
     setStatus("loading");
 
-    // const { files } = sandpack;
     try {
-      const response = await api.post(
-        `${API}/challenge/${challengeId}/submit`,
+      const codeFiles = Object.entries(sandpack.files).reduce(
+        (acc, [path, file]: any) => {
+          acc[path] = file.code;
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+
+      await api.post(
+        `${API}/submission/${challengeId}/sessions/${sessionId}/submit`,
         {
-          sessionId,
-        //   files: sandpack.files
+          code: JSON.stringify(codeFiles),
+          language: "react",
+          autosubmitted: false,
+  
         },
       );
       setStatus("success");
-    } catch (error) {
-      setStatus("error");
       setTimeout(() => {
-        setStatus("idle");
-      }, 3000);
+        router.push("/challenges");
+      });
+    } catch (error: any) {
+      if (error?.response?.status === 409) {
+        setStatus("success"); 
+        return;
+      }
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 3000);
     }
   };
 
@@ -75,20 +92,27 @@ function SubmitBtn({
         onClick={() => status === "idle" && setShowConfirm(true)}
         disabled={status === "loading" || status === "success"}
         className={`flex items-center gap-2 px-4 py-1 rounded-md text-sm font-medium border transition-all
-          ${status === "success"
-            ? "bg-green-600/20 border-green-500/40 text-green-400 cursor-default"
-            : status === "error"
-            ? "bg-red-600/20 border-red-500/40 text-red-400"
-            : status === "loading"
-            ? "bg-gray-700 border-gray-600 text-gray-400 cursor-not-allowed"
-            : "bg-green-600 border-green-500 text-white hover:bg-green-500 cursor-pointer"
+          ${
+            status === "success"
+              ? "bg-green-600/20 border-green-500/40 text-green-400 cursor-default"
+              : status === "error"
+                ? "bg-red-600/20 border-red-500/40 text-red-400"
+                : status === "loading"
+                  ? "bg-gray-700 border-gray-600 text-gray-400 cursor-not-allowed"
+                  : "bg-green-600 border-green-500 text-white hover:bg-green-500 cursor-pointer"
           }`}
       >
         {status === "loading" && <Loader2 size={14} className="animate-spin" />}
         {status === "success" && <CheckCircle size={14} />}
         {(status === "idle" || status === "error") && <Send size={14} />}
         <span>
-          {status === "loading" ? "Submitting..." : status === "success" ? "Submitted!" : status === "error" ? "Failed — Retry" : "Submit"}
+          {status === "loading"
+            ? "Submitting..."
+            : status === "success"
+              ? "Submitted!"
+              : status === "error"
+                ? "Failed — Retry"
+                : "Submit"}
         </span>
       </button>
     </>

@@ -3,6 +3,7 @@ import cors from "cors";
 import "dotenv/config";
 import authRoutes from "./routes/authRoutes.js";
 import challengeRoutes from "./routes/challengeRoutes.js";
+import submissionRoutes from "./routes/submissionRoutes.js";
 
 import cookie from "cookie-parser";
 import { startCronJobs } from "./services/cron.service.js";
@@ -30,7 +31,8 @@ app.get("/", (req, res) => {
 });
 
 app.use("/auth", authRoutes);
-app.use("/challenge", challengeRoutes)
+app.use("/challenge", challengeRoutes);
+app.use("/submission", submissionRoutes);
 // async function startServer() {
 //   //Redis test (TEMPORARY)
 //   await redis.set("ping", "pong");

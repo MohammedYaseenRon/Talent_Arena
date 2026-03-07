@@ -34,6 +34,8 @@ export interface ChallengeContent {
   allowedLanguages: string[];
 }
 
+
+
 export interface AttemptChallenge {
   challengeId: string;
   title: string;

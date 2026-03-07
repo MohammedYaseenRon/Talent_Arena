@@ -4,7 +4,7 @@ import { ChallengeSidebar } from "@/components/recruiter/SideBarModal";
 import SubmitBtn from "@/components/recruiter/SubmitBtn";
 import Timer from "@/components/recruiter/Timer";
 import api from "@/lib/axios";
-import { AttemptChallenge } from "@/types";
+import { AttemptChallenge, AttemptSession } from "@/types";
 import {
   SandpackProvider,
   SandpackFileExplorer,
@@ -80,7 +80,7 @@ function MoreOptionsDropdown({
 function TopBar({
   challengeId,
   sessionId,
-  durationMinutes,
+  endTime,
   onMoreClick,
   openTabs,
   activeFile,
@@ -89,7 +89,7 @@ function TopBar({
 }: {
   challengeId: string;
   sessionId: string;
-  durationMinutes: number;
+  endTime: string;
   onMoreClick: (e: React.MouseEvent) => void;
   openTabs: string[];
   activeFile: string;
@@ -127,7 +127,7 @@ function TopBar({
       </div>
 
       <div className="flex items-center gap-2 px-2 flex-shrink-0 border-l border-gray-700 h-full">
-        <Timer durationMinutes={durationMinutes} />
+        <Timer endTime={endTime} />
         <SubmitBtn challengeId={challengeId} sessionId={sessionId} />
         <button
           onClick={onMoreClick}
@@ -144,12 +144,12 @@ function EditorWithTopBar({
   onMoreClick,
   challengeId,
   sessionId,
-  durationMinutes,
+  endTime,
 }: {
   onMoreClick: (e: React.MouseEvent) => void;
   challengeId: string;
   sessionId: string;
-  durationMinutes: number;
+  endTime: string;
 }) {
   const { sandpack } = useSandpack();
   const { activeFile } = sandpack;
@@ -178,7 +178,7 @@ function EditorWithTopBar({
       <TopBar
         challengeId={challengeId}
         sessionId={sessionId}
-        durationMinutes={durationMinutes}
+        endTime={endTime}
         onMoreClick={onMoreClick}
         openTabs={openTabs}
         activeFile={activeFile}
@@ -209,13 +209,12 @@ export default function Attempt() {
   const challengeId = params.challengeId as string;
   const sessionId = searchParams.get("session") as string;
   const [challengeDetail, setChallengeDetail] = useState<AttemptChallenge | null>(null);
-  const [session, setSession] = useState([]);
+  const [session, setSession] = useState<AttemptSession | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  const [editorFlex, setEditorFlex] = useState(50); // percentage
+  const [editorFlex, setEditorFlex] = useState(50); 
 
 
 
@@ -254,7 +253,6 @@ export default function Attempt() {
     setDropdownPosition({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
     setIsDropdownOpen(!isDropdownOpen);
   };
-  const durationMinutes = (session as any)?.duration ?? 60;
 
   if (loading) {
     return (
@@ -313,14 +311,13 @@ export default function Attempt() {
               </div>
             )}
 
-            {/* Editor */}
               <div ref={containerRef} style={{ display: "flex", flex: 1, height: "100%", minWidth: 0 }}>
               <div style={{ width: `${editorFlex}%`, height: "100%", display: "flex", flexDirection: "column", position: "relative", minWidth: 0 }}>
                 <EditorWithTopBar
                   onMoreClick={handleMoreClick}
                   challengeId={challengeId}
                   sessionId={sessionId}
-                  durationMinutes={durationMinutes}
+                  endTime={session?.endTime || ""}
                 />
               </div>
 

@@ -4,11 +4,20 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import Link from "next/link";
-import { Building2, User, Globe, Clock, Zap, Shield, CheckCircle2, ArrowRight, Timer } from "lucide-react";
+import {
+  Building2,
+  User,
+  Globe,
+  Clock,
+  Zap,
+  Shield,
+  CheckCircle2,
+  ArrowRight,
+  Timer,
+} from "lucide-react";
 import api from "@/lib/axios";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
-
 
 interface InstructionData {
   challengeId: string;
@@ -30,24 +39,33 @@ interface InstructionData {
   };
 }
 
-
 const difficultyConfig = {
-  EASY:   { label: "Easy",   classes: "text-emerald-400 border-emerald-800 bg-emerald-950" },
-  MEDIUM: { label: "Medium", classes: "text-amber-400 border-amber-800 bg-amber-950" },
-  HARD:   { label: "Hard",   classes: "text-red-400 border-red-800 bg-red-950" },
+  EASY: {
+    label: "Easy",
+    classes: "text-emerald-400 border-emerald-800 bg-emerald-950",
+  },
+  MEDIUM: {
+    label: "Medium",
+    classes: "text-amber-400 border-amber-800 bg-amber-950",
+  },
+  HARD: { label: "Hard", classes: "text-red-400 border-red-800 bg-red-950" },
 };
 
 function formatDateTime(dateStr: string) {
   return new Date(dateStr).toLocaleString("en-US", {
-    weekday: "short", month: "short", day: "numeric",
-    hour: "2-digit", minute: "2-digit",
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
 function useCountdown(target: string) {
   const [ms, setMs] = useState(0);
   useEffect(() => {
-    const tick = () => setMs(Math.max(0, new Date(target).getTime() - Date.now()));
+    const tick = () =>
+      setMs(Math.max(0, new Date(target).getTime() - Date.now()));
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
@@ -59,10 +77,10 @@ function formatMs(ms: number) {
   const h = Math.floor(ms / 3600000);
   const m = Math.floor((ms % 3600000) / 60000);
   const s = Math.floor((ms % 60000) / 1000);
-  if (h > 0) return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
-  return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  if (h > 0)
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
-
 
 export default function InstructionsPage() {
   const params = useParams();
@@ -77,6 +95,7 @@ export default function InstructionsPage() {
   const [agreed, setAgreed] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const [registering, setRegistering] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
   const [error, setError] = useState("");
   const hasAutoNavigated = useRef(false);
 
@@ -86,18 +105,20 @@ export default function InstructionsPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await axios.get(
-          `${API}/challenge/${challengeId}/instructions?session=${sessionId}`,
-          { withCredentials: true }
-        );
+        const res = await api.get(
+          `${API}/challenge/${challengeId}/instructions?session=${sessionId}`);
         setData(res.data.challenge);
 
-        const participantRes = await api.get(
-          `${API}/challenge/sessions/${sessionId}/participant`,
-        ).catch(() => null);
+        const participantRes = await api
+          .get(`${API}/challenge/sessions/${sessionId}/participant`)
+          .catch(() => null);
+        console.log(participantRes?.data)
 
-        if (participantRes?.data?.isRegistered) {
+        if(participantRes?.data?.isRegistered) {
           setIsRegistered(true);
+        }
+        if(participantRes?.data?.hasSubmitted) {
+          setIsCompleted(true);
         }
       } catch (e) {
         console.error(e);
@@ -111,7 +132,11 @@ export default function InstructionsPage() {
 
   useEffect(() => {
     if (!data || hasAutoNavigated.current) return;
-    if (data.session.status === "SCHEDULED" && timeToStart === 0 && isRegistered) {
+    if (
+      data.session.status === "SCHEDULED" &&
+      timeToStart === 0 &&
+      isRegistered
+    ) {
       hasAutoNavigated.current = true;
       router.replace(`/challenges/${challengeId}/attempt?session=${sessionId}`);
     }
@@ -122,8 +147,7 @@ export default function InstructionsPage() {
     setRegistering(true);
     setError("");
     try {
-      await api.post(
-        `${API}/challenge/sessions/${sessionId}/join`);
+      await api.post(`${API}/challenge/sessions/${sessionId}/join`);
 
       if (data?.session.status === "LIVE") {
         router.push(`/challenges/${challengeId}/attempt?session=${sessionId}`);
@@ -157,7 +181,9 @@ export default function InstructionsPage() {
   if (error || !data) {
     return (
       <div className="min-h-screen bg-[#080a0f] flex items-center justify-center">
-        <p className="text-sm font-mono text-red-500">{error || "Challenge not found"}</p>
+        <p className="text-sm font-mono text-red-500">
+          {error || "Challenge not found"}
+        </p>
       </div>
     );
   }
@@ -166,14 +192,13 @@ export default function InstructionsPage() {
   const isScheduled = data.session.status === "SCHEDULED";
   const diff = difficultyConfig[data.difficulty] ?? difficultyConfig.EASY;
 
-  
   return (
     <div className="min-h-screen bg-[#080a0f] text-slate-100">
-
-      <div className={`h-px w-full ${isLive ? "bg-gradient-to-r from-transparent via-emerald-500 to-transparent" : "bg-gradient-to-r from-transparent via-blue-500/40 to-transparent"}`} />
+      <div
+        className={`h-px w-full ${isLive ? "bg-gradient-to-r from-transparent via-emerald-500 to-transparent" : "bg-gradient-to-r from-transparent via-blue-500/40 to-transparent"}`}
+      />
 
       <div className="max-w-2xl mx-auto px-6 py-10">
-
         <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-xs font-mono text-slate-600 hover:text-slate-400 transition-colors mb-8"
@@ -194,7 +219,9 @@ export default function InstructionsPage() {
               UPCOMING
             </span>
           )}
-          <span className={`text-xs font-mono font-bold px-3 py-1 border ${diff.classes}`}>
+          <span
+            className={`text-xs font-mono font-bold px-3 py-1 border ${diff.classes}`}
+          >
             {diff.label}
           </span>
           <span className="text-xs font-mono text-slate-600 px-3 py-1 border border-slate-800">
@@ -214,7 +241,6 @@ export default function InstructionsPage() {
 
         {/* Two column info */}
         <div className="grid grid-cols-2 gap-3 mb-8">
-
           {/* Company card */}
           <div className="bg-slate-900/60 border border-slate-800 p-4">
             <p className="text-xs font-mono text-slate-600 uppercase tracking-widest mb-3">
@@ -269,10 +295,12 @@ export default function InstructionsPage() {
           </div>
         </div>
 
-        <div className={`mb-8 p-5 border text-center
-          ${isLive
-            ? "bg-emerald-950/20 border-emerald-900/40"
-            : "bg-slate-900/40 border-slate-800"
+        <div
+          className={`mb-8 p-5 border text-center
+          ${
+            isLive
+              ? "bg-emerald-950/20 border-emerald-900/40"
+              : "bg-slate-900/40 border-slate-800"
           }`}
         >
           {isLive ? (
@@ -284,7 +312,11 @@ export default function InstructionsPage() {
                 {formatMs(timeToEnd)}
               </p>
               <p className="text-xs font-mono text-slate-600 mt-2">
-                Challenge ends at {new Date(data.session.endTime).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                Challenge ends at{" "}
+                {new Date(data.session.endTime).toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </p>
             </>
           ) : (
@@ -298,8 +330,7 @@ export default function InstructionsPage() {
               <p className="text-xs font-mono text-slate-700 mt-2">
                 {isRegistered
                   ? "You will be redirected automatically when it starts"
-                  : "Register below to get access when it starts"
-                }
+                  : "Register below to get access when it starts"}
               </p>
             </>
           )}
@@ -333,7 +364,7 @@ export default function InstructionsPage() {
           </ul>
         </div>
 
-        {isRegistered && isLive && (
+        {!isCompleted && isRegistered && isLive && (
           <div className="space-y-4">
             <div className="flex items-center gap-3 p-4 bg-emerald-950/30 border border-emerald-900/50">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -350,7 +381,25 @@ export default function InstructionsPage() {
           </div>
         )}
 
-        {isRegistered && isScheduled && (
+        {isCompleted && (
+          <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 bg-emerald-950/30 border border-emerald-900/50">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <p className="text-sm font-mono text-emerald-400">
+                  You're completed this challenge
+                </p>
+              </div>
+              <button
+                // onClick={handleContinue}
+                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold tracking-wide transition-colors flex items-center justify-center gap-2"
+              >
+                Your result
+                <ArrowRight className="w-4 h-4" />
+              </button>
+          </div>
+        )}
+
+        {!isCompleted && isRegistered && isScheduled && (
           <div className="flex items-center gap-3 p-4 bg-blue-950/30 border border-blue-900/50">
             <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
             <div>
@@ -358,13 +407,14 @@ export default function InstructionsPage() {
                 You're registered ✓
               </p>
               <p className="text-xs font-mono text-slate-600 mt-0.5">
-                This page will redirect you automatically when the challenge starts
+                This page will redirect you automatically when the challenge
+                starts
               </p>
             </div>
           </div>
         )}
 
-        {!isRegistered && (
+        {!isCompleted && !isRegistered && (
           <div className="space-y-4">
             <label className="flex items-start gap-3 cursor-pointer group p-4 border border-slate-800 hover:border-slate-700 transition-colors">
               <div className="relative mt-0.5 shrink-0">
@@ -374,21 +424,35 @@ export default function InstructionsPage() {
                   onChange={(e) => setAgreed(e.target.checked)}
                   className="sr-only"
                 />
-                <div className={`w-4 h-4 border transition-colors flex items-center justify-center
-                  ${agreed
-                    ? "bg-violet-600 border-violet-600"
-                    : "border-slate-600 group-hover:border-slate-500"
+                <div
+                  className={`w-4 h-4 border transition-colors flex items-center justify-center
+                  ${
+                    agreed
+                      ? "bg-violet-600 border-violet-600"
+                      : "border-slate-600 group-hover:border-slate-500"
                   }`}
                 >
                   {agreed && (
-                    <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 10 10" fill="none">
-                      <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <svg
+                      className="w-2.5 h-2.5 text-white"
+                      viewBox="0 0 10 10"
+                      fill="none"
+                    >
+                      <path
+                        d="M1.5 5L4 7.5L8.5 2.5"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                   )}
                 </div>
               </div>
               <span className="text-xs font-mono text-slate-400 group-hover:text-slate-300 transition-colors leading-relaxed">
-                I have read and understood all the rules. I agree to participate fairly and accept that violations may result in disqualification.
+                I have read and understood all the rules. I agree to participate
+                fairly and accept that violations may result in
+                disqualification.
               </span>
             </label>
 
@@ -400,9 +464,10 @@ export default function InstructionsPage() {
               onClick={handleRegisterOrJoin}
               disabled={!agreed || registering}
               className={`w-full py-3.5 text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed
-                ${isLive
-                  ? "bg-emerald-600 hover:bg-emerald-500 text-white"
-                  : "bg-violet-600 hover:bg-violet-500 text-white"
+                ${
+                  isLive
+                    ? "bg-emerald-600 hover:bg-emerald-500 text-white"
+                    : "bg-violet-600 hover:bg-violet-500 text-white"
                 }`}
             >
               {registering ? (
@@ -413,9 +478,13 @@ export default function InstructionsPage() {
               ) : (
                 <>
                   {isLive ? (
-                    <>Join & Start Challenge <ArrowRight className="w-4 h-4" /></>
+                    <>
+                      Join & Start Challenge <ArrowRight className="w-4 h-4" />
+                    </>
                   ) : (
-                    <>Register for Challenge <ArrowRight className="w-4 h-4" /></>
+                    <>
+                      Register for Challenge <ArrowRight className="w-4 h-4" />
+                    </>
                   )}
                 </>
               )}
@@ -424,12 +493,10 @@ export default function InstructionsPage() {
             <p className="text-center text-xs font-mono text-slate-700">
               {isLive
                 ? "You'll be taken to the challenge immediately after joining"
-                : "You'll be automatically redirected when the challenge goes live"
-              }
+                : "You'll be automatically redirected when the challenge goes live"}
             </p>
           </div>
         )}
-
       </div>
     </div>
   );
