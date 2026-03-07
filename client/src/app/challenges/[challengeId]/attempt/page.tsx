@@ -7,9 +7,10 @@ import {
   SandpackProvider,
   SandpackFileExplorer,
   SandpackPreview,
+  SandpackLayout,
+  SandpackCodeEditor,
   useSandpack,
 } from "@codesandbox/sandpack-react";
-import Editor from "@monaco-editor/react";
 import {
   MoreVertical,
   X,
@@ -21,7 +22,6 @@ import {
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 
-// ─── Dropdown Menu ───────────────────────────────────────────────
 function MoreOptionsDropdown({
   isOpen,
   onClose,
@@ -39,29 +39,15 @@ function MoreOptionsDropdown({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         onClose();
       }
     };
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
-
-  const handleFileExplorerClick = () => {
-    onToggleFileExplorer();
-    onClose();
-  };
 
   return (
     <div
@@ -71,17 +57,13 @@ function MoreOptionsDropdown({
     >
       <div className="py-1">
         <button
-          onClick={handleFileExplorerClick}
+          onClick={() => { onToggleFileExplorer(); onClose(); }}
           className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
         >
           <FolderTree size={16} className="text-blue-400" />
-          <span>
-            {isFileExplorerOpen ? "Hide File Explorer" : "Show File Explorer"}
-          </span>
+          <span>{isFileExplorerOpen ? "Hide File Explorer" : "Show File Explorer"}</span>
         </button>
-
-        <div className="border-t border-gray-700 my-1"></div>
-
+        <div className="border-t border-gray-700 my-1" />
         <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700 transition-colors">
           <Files size={16} className="text-green-400" />
           <span>All Files</span>
@@ -91,23 +73,14 @@ function MoreOptionsDropdown({
   );
 }
 
-
-function EditorTabs({
-  onMoreClick,
-}: {
-  onMoreClick: (e: React.MouseEvent) => void;
-}) {
+function EditorTabs({ onMoreClick }: { onMoreClick: (e: React.MouseEvent) => void }) {
   const { sandpack } = useSandpack();
   const { activeFile } = sandpack;
   const [openTabs, setOpenTabs] = useState<string[]>([activeFile]);
   const closedTabsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    if (
-      activeFile &&
-      !openTabs.includes(activeFile) &&
-      !closedTabsRef.current.has(activeFile)
-    ) {
+    if (activeFile && !openTabs.includes(activeFile) && !closedTabsRef.current.has(activeFile)) {
       setOpenTabs((prev) => [...prev, activeFile]);
     }
     if (closedTabsRef.current.has(activeFile)) {
@@ -115,23 +88,16 @@ function EditorTabs({
     }
   }, [activeFile]);
 
-
   const closeTab = (path: string) => {
     closedTabsRef.current.add(path);
     const newTabs = openTabs.filter((tab) => tab !== path);
     setOpenTabs(newTabs);
-
-    if (newTabs.length === 0) {
-      return;
-    }
-
-    if (path === activeFile) {
-      sandpack.setActiveFile(newTabs[newTabs.length - 1]);
-    }
+    if (newTabs.length === 0) return;
+    if (path === activeFile) sandpack.setActiveFile(newTabs[newTabs.length - 1]);
   };
 
   return (
-    <div className="flex items-center bg-gray-900 border-b border-gray-700 h-9 flex-shrink-0">
+    <div className="flex items-center bg-gray-900 border-b border-gray-700 h-9 flex-shrink-0 absolute top-0 left-0 right-0 z-10">
       <div className="flex items-center overflow-x-auto flex-1 scrollbar-none">
         {openTabs.length === 0 ? (
           <div className="px-4 py-2 text-xs text-gray-500 italic">
@@ -143,21 +109,14 @@ function EditorTabs({
               key={path}
               onClick={() => sandpack.setActiveFile(path)}
               className={`
-                flex items-center gap-2 h-full text-md px-4 py-3 border-r border-gray-700 cursor-pointer whitespace-nowrap select-none
-                ${
-                  activeFile === path
-                    ? "bg-gray-800 text-white"
-                    : "bg-gray-900 text-gray-400 hover:bg-gray-800/60"
-                }
+                flex items-center gap-2 h-9 text-sm px-4 border-r border-gray-700 
+                cursor-pointer whitespace-nowrap select-none
+                ${activeFile === path ? "bg-gray-800 text-white" : "bg-gray-900 text-gray-400 hover:bg-gray-800/60"}
               `}
             >
               <span>{path.split("/").pop()}</span>
-
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  closeTab(path);
-                }}
+                onClick={(e) => { e.stopPropagation(); closeTab(path); }}
                 className="hover:text-white rounded-sm hover:bg-gray-700 p-0.5"
               >
                 <X size={12} />
@@ -166,68 +125,12 @@ function EditorTabs({
           ))
         )}
       </div>
-
       <button
         onClick={onMoreClick}
         className="flex items-center justify-center w-9 h-full border-l border-gray-700 hover:bg-gray-800 transition-colors flex-shrink-0"
-        aria-label="More options"
       >
         <MoreVertical size={14} className="text-gray-400" />
       </button>
-    </div>
-  );
-}
-
-
-function MonacoEditor() {
-  const { sandpack } = useSandpack();
-  const { activeFile, files } = sandpack;
-  const code = files[activeFile]?.code || "";
-
-  const getLanguage = (filename: string) => {
-    if (filename.endsWith(".tsx") || filename.endsWith(".ts"))
-      return "typescript";
-    if (filename.endsWith(".jsx") || filename.endsWith(".js"))
-      return "javascript";
-    if (filename.endsWith(".css")) return "css";
-    if (filename.endsWith(".html")) return "html";
-    if (filename.endsWith(".json")) return "json";
-    return "javascript";
-  };
-
-  return (
-    <Editor
-      height="100%"
-      language={getLanguage(activeFile)}
-      theme="vs-dark"
-      value={code}
-      onChange={(value) => sandpack.updateFile(activeFile, value || "")}
-      options={{
-        fontSize: 14,
-        minimap: { enabled: false },
-        wordWrap: "on",
-        automaticLayout: true,
-        scrollBeyondLastLine: false,
-        padding: { top: 12 },
-        lineNumbersMinChars: 3,
-        folding: true,
-        renderLineHighlight: "gutter",
-      }}
-    />
-  );
-}
-
-function EditorArea({
-  onMoreClick,
-}: {
-  onMoreClick: (e: React.MouseEvent) => void;
-}) {
-  return (
-    <div className="basis-1/2 flex-1 h-full flex flex-col bg-gray-950 min-w-0">
-      <EditorTabs onMoreClick={onMoreClick} />
-      <div className="flex-1 min-h-0">
-        <MonacoEditor />
-      </div>
     </div>
   );
 }
@@ -238,10 +141,7 @@ export default function Attempt() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isFileExplorerOpen, setIsFileExplorerOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState({
-    top: 0,
-    right: 0,
-  });
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
   const API = process.env.NEXT_PUBLIC_API_URL;
   const challengeId = params.challengeId as string;
   const sessionId = searchParams.get("session") as string;
@@ -251,56 +151,23 @@ export default function Attempt() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const load = async() => {
+  const load = async () => {
     try {
       const res = await api.get(`${API}/challenge/${challengeId}/attempt-data?session=${sessionId}`);
-      setChallengeDetail(res.data.challenge)
+      setChallengeDetail(res.data.challenge);
       setSession(res.data.session);
-    }catch (err: any) {
-        const status = err?.response?.status;
-        const message = err?.response?.data?.error;
-
-        if (status === 401) {
-          router.replace("/login");
-          return;
-        }
-        if (status === 403) {
-          router.replace(`/challenges/${challengeId}/instructions?session=${sessionId}`);
-          return;
-        }
-        setError(message || "Failed to load challenge");
-      }finally{
-        setLoading(false);
-      }
-  }
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  // const challenge = {
-  //   title: "Build a Todo App",
-  //   difficulty: "medium",
-  //   challengeType: "FRONTEND",
-  //   description:
-  //     "Create a fully functional todo application with add, edit, delete, and filter capabilities.",
-  //   createdAt: "2026-02-21T10:30:00Z",
-  //   tags: ["React", "TypeScript", "Tailwind"],
-  //   candidates: 5,
-  // };
-
-  const toggleFileExplorer = () => {
-    setIsFileExplorerOpen(!isFileExplorerOpen);
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const message = err?.response?.data?.error;
+      if (status === 401) { router.replace("/login"); return; }
+      if (status === 403) { router.replace(`/challenges/${challengeId}/instructions?session=${sessionId}`); return; }
+      setError(message || "Failed to load challenge");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleMoreClick = (e: React.MouseEvent) => {
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    setDropdownPosition({
-      top: rect.bottom + 4,
-      right: window.innerWidth - rect.right,
-    });
-    setIsDropdownOpen(!isDropdownOpen);
-  };
+  useEffect(() => { load(); }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -309,92 +176,105 @@ export default function Attempt() {
         setIsFileExplorerOpen(false);
       }
     };
-
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-   if (loading) {
+  const handleMoreClick = (e: React.MouseEvent) => {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setDropdownPosition({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-slate-800 border-t-slate-400 rounded-full animate-spin" />
-          <p className="text-xs font-mono text-slate-600 tracking-widest">
-            Loading challenge…
-          </p>
+          <p className="text-xs font-mono text-slate-600 tracking-widest">Loading challenge…</p>
         </div>
       </div>
     );
   }
 
+
   return (
     <div className="h-screen w-screen flex overflow-hidden bg-gray-950">
+
       {!isSidebarOpen && (
         <button
           onClick={() => setIsSidebarOpen(true)}
           className="absolute top-2 left-2 z-40 p-1.5 bg-gray-800 border border-gray-700 rounded-md hover:bg-gray-700 transition-colors"
-          aria-label="Open sidebar"
         >
           <PanelLeftOpen size={16} className="text-gray-300" />
         </button>
       )}
 
-      <div
-        className={`
-          h-full flex-shrink-0 transition-all duration-200 ease-in-out overflow-hidden
-          ${isSidebarOpen ? "w-64 md:w-72" : "w-0"}
-        `}
-      >
+      <div className={`h-full flex-shrink-0 transition-all duration-200 ease-in-out overflow-hidden ${isSidebarOpen ? "w-64 md:w-72" : "w-0"}`}>
         <div className="h-full w-64 md:w-72 relative">
           <ChallengeSidebar challenge={challengeDetail!} />
-
           <button
             onClick={() => setIsSidebarOpen(false)}
             className="absolute top-2 right-2 z-10 p-1 bg-gray-800/80 border border-gray-700/50 rounded-md hover:bg-gray-700 transition-colors"
-            aria-label="Close sidebar"
           >
             <PanelLeftClose size={14} className="text-gray-400" />
           </button>
         </div>
       </div>
 
-      
-      <SandpackProvider
-        theme="dark"
-        template="react"
-        style={{ display: "flex", flex: 1, minWidth: 0, height: "100%" }}
-      >
-        <div className="flex-1 flex h-full min-w-0 overflow-hidden">
-          <div
-            className={`
-                h-full border-r border-gray-700 overflow-y-auto bg-gray-900 flex-shrink-0
-                transition-all duration-200 ease-in-out
-                ${isFileExplorerOpen ? "w-48 lg:w-56 opacity-100" : "w-0 opacity-0 overflow-hidden"}
-              `}
+      <div className="flex-1 min-w-0 h-full overflow-hidden">
+        <SandpackProvider
+          theme="dark"
+          template="react"
+        >
+          <SandpackLayout
+            style={{
+              height: "100vh",
+              width: "100%",       
+              border: "none",
+              borderRadius: 0,
+              display: "flex",      
+            }}
           >
-            <SandpackFileExplorer />
-          </div>
+            {/* File Explorer */}
+            {isFileExplorerOpen && (
+              <div style={{ width: "180px", height: "100%", borderRight: "1px solid #374151", overflow: "auto", background: "#111827", flexShrink: 0 }}>
+                <SandpackFileExplorer />
+              </div>
+            )}
 
-          <EditorArea onMoreClick={handleMoreClick} />
-          <div className="flex-1 h-full border-l border-gray-700 min-w-0 overflow-hidden">
+            {/* Editor */}
+            <div style={{ flex: 1, height: "100%", display: "flex", flexDirection: "column", position: "relative", minWidth: 0 }}>
+              <EditorTabs onMoreClick={handleMoreClick} />
+              <div style={{ flex: 1, marginTop: "36px", overflow: "hidden" }}>
+                <SandpackCodeEditor
+                  showTabs={false}
+                  showLineNumbers={true}
+                  showInlineErrors={true}
+                  wrapContent={true}
+                  style={{ height: "100%" }}
+                />
+              </div>
+            </div>
+
             <SandpackPreview
               showRefreshButton={true}
               showOpenInCodeSandbox={false}
-              style={{ height: "100%", width: "100%" }}
+              style={{ flex: 1, height: "100%", minWidth: 0 }}
             />
-          </div>
-        </div>
 
-        <MoreOptionsDropdown
-          isOpen={isDropdownOpen}
-          onClose={() => setIsDropdownOpen(false)}
-          onToggleFileExplorer={toggleFileExplorer}
-          isFileExplorerOpen={isFileExplorerOpen}
-          position={dropdownPosition}
-        />
-      </SandpackProvider>
+          </SandpackLayout>
 
+          <MoreOptionsDropdown
+            isOpen={isDropdownOpen}
+            onClose={() => setIsDropdownOpen(false)}
+            onToggleFileExplorer={() => setIsFileExplorerOpen(!isFileExplorerOpen)}
+            isFileExplorerOpen={isFileExplorerOpen}
+            position={dropdownPosition}
+          />
+        </SandpackProvider>
+      </div>
 
     </div>
   );

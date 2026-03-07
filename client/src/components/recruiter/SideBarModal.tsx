@@ -32,7 +32,7 @@ export function ChallengeSidebar({ challenge }: { challenge: AttemptChallenge })
 
       <div className="px-4 py-4 flex flex-col gap-4 flex-1">
 
-        {/* Title & Badges */}
+
         <div>
           <h2 className="text-base font-bold text-white leading-tight">
             {challenge.title}
@@ -51,7 +51,6 @@ export function ChallengeSidebar({ challenge }: { challenge: AttemptChallenge })
           </div>
         </div>
 
-        {/* Description */}
         {challenge.description && (
           <Section icon={<Info size={14} />} label="Description">
             <p className="text-sm text-gray-300 leading-relaxed">
@@ -60,14 +59,12 @@ export function ChallengeSidebar({ challenge }: { challenge: AttemptChallenge })
           </Section>
         )}
 
-        {/* Task Description — always shown */}
         <Section icon={<FileText size={14} />} label="Task Description">
           <p className="text-sm text-gray-300 leading-relaxed">
             {content.taskDescription}
           </p>
         </Section>
 
-        {/* Features */}
         {content.features && (
           <Section icon={<List size={14} />} label="Features">
             <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
@@ -76,7 +73,6 @@ export function ChallengeSidebar({ challenge }: { challenge: AttemptChallenge })
           </Section>
         )}
 
-        {/* Optional Requirements */}
         {content.optionalRequirements && (
           <Section icon={<Lightbulb size={14} />} label="Optional Requirements">
             <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
@@ -85,7 +81,6 @@ export function ChallengeSidebar({ challenge }: { challenge: AttemptChallenge })
           </Section>
         )}
 
-        {/* API Details */}
         {content.apiDetails && (
           <Section icon={<Globe size={14} />} label="API Details">
             <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
@@ -112,13 +107,11 @@ export function ChallengeSidebar({ challenge }: { challenge: AttemptChallenge })
                       alt={`Design reference ${i + 1}`}
                       className="w-full object-cover group-hover:opacity-80 transition-opacity"
                     />
-                    {/* Hover overlay */}
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
                       <span className="text-xs font-mono text-white bg-black/60 px-2 py-1 rounded">
                         Open full size ↗
                       </span>
                     </div>
-                    {/* Index badge */}
                     <span className="absolute bottom-1 left-1 text-xs font-mono text-white/60 bg-black/50 px-1.5 py-0.5 rounded">
                       {i + 1} / {content.designImages?.length}
                     </span>
