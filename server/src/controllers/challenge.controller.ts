@@ -668,6 +668,99 @@ export const checkParticipant = async (req:Request, res: Response) => {
   return res.status(200).json({ isRegistered: !!participant, hasSubmitted: !!submission});
 };
 
+export const getSessionSubmission = async (req: Request, res: Response) => {
+  try {
+    const recruiterId = req.user?.userId;
+    const { challengeId } = req.params as { challengeId: string };
+
+    if (!recruiterId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    // Verify recruiter owns this challenge
+    const [challenge] = await db
+      .select()
+      .from(challenges)
+      .where(
+        and(
+          eq(challenges.id, challengeId),
+          eq(challenges.createdBy, recruiterId)
+        )
+      )
+      .limit(1);
+
+    if (!challenge) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // Find session for this challenge automatically
+    const [session] = await db
+      .select()
+      .from(challengeSessions)
+      .where(eq(challengeSessions.challengeId, challengeId))
+      .limit(1);
+
+    if (!session) {
+      return res.status(404).json({ error: "No session found for this challenge" });
+    }
+
+    const sessionId = session.id;
+
+    // Get all participants with submission + AI results
+    const participants = await db
+      .select({
+        userId: users.id,
+        name: users.name,
+        email: users.email,
+        startedAt: sessionParticipants.startedAt,
+        finishedAt: sessionParticipants.finishedAt,
+        submissionId: submissions.id,
+        submittedAt: submissions.submittedAt,
+        autoSubmitted: submissions.autoSubmitted,
+        aiScore: submissions.aiScore,
+        aiSummary: submissions.aiSummary,
+        aiBreakdown: submissions.aiBreakDown,
+        aiStrengths: submissions.aiStrengths,
+        aiImprovements: submissions.aiImprovements,
+        featuresCompleted: submissions.featuresCompleted,
+        featuresMissing: submissions.featuresMissing,
+        evaluatedAt: submissions.evaluatedAt,
+      })
+      .from(sessionParticipants)
+      .innerJoin(users, eq(sessionParticipants.userId, users.id))
+      .leftJoin(
+        submissions,
+        and(
+          eq(submissions.sessionId, sessionId),
+          eq(submissions.userId, sessionParticipants.userId)
+        )
+      )
+      .where(eq(sessionParticipants.sessionId, sessionId))
+      .orderBy(submissions.aiScore);
+
+    const result = participants.map((p) => ({
+      ...p,
+      status: p.submissionId
+        ? p.evaluatedAt
+          ? "EVALUATED"
+          : "PENDING"
+        : p.startedAt
+        ? "IN_PROGRESS"
+        : "REGISTERED",
+    }));
+
+    return res.status(200).json({
+      challengeTitle: challenge.title,
+      sessionId,
+      total: result.length,
+      submissions: result,
+    });
+  } catch (error) {
+    console.error("Get session submissions error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 export const getAttemptData = async(req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
@@ -784,3 +877,113 @@ export const getAttemptData = async(req: Request, res: Response) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 }
+
+// Add this to challenge.controller.ts
+
+export const getAllChallengeSubmissions = async (req: Request, res: Response) => {
+  try {
+    const recruiterId = req.user?.userId;
+    if (!recruiterId) return res.status(401).json({ error: "Unauthorized" });
+
+    // Get all challenges by recruiter that have sessions
+    const challengeList = await db
+      .select({
+        challengeId: challenges.id,
+        title: challenges.title,
+        difficulty: challenges.difficulty,
+        challengeType: challenges.challengeType,
+        sessionId: challengeSessions.id,
+        sessionStatus: challengeSessions.status,
+        startTime: challengeSessions.startTime,
+        endTime: challengeSessions.endTime,
+      })
+      .from(challenges)
+      .innerJoin(challengeSessions, eq(challengeSessions.challengeId, challenges.id))
+      .where(eq(challenges.createdBy, recruiterId))
+      .orderBy(challengeSessions.startTime);
+
+    if (challengeList.length === 0) {
+      return res.status(200).json({ challenges: [] });
+    }
+
+    // For each challenge, get participants + submissions
+    const result = await Promise.all(
+      challengeList.map(async (ch) => {
+        const participants = await db
+          .select({
+            userId: users.id,
+            name: users.name,
+            email: users.email,
+            startedAt: sessionParticipants.startedAt,
+            finishedAt: sessionParticipants.finishedAt,
+            submissionId: submissions.id,
+            submittedAt: submissions.submittedAt,
+            autoSubmitted: submissions.autoSubmitted,
+            aiScore: submissions.aiScore,
+            aiSummary: submissions.aiSummary,
+            aiBreakdown: submissions.aiBreakDown,
+            aiStrengths: submissions.aiStrengths,
+            aiImprovements: submissions.aiImprovements,
+            featuresCompleted: submissions.featuresCompleted,
+            featuresMissing: submissions.featuresMissing,
+            evaluatedAt: submissions.evaluatedAt,
+          })
+          .from(sessionParticipants)
+          .innerJoin(users, eq(sessionParticipants.userId, users.id))
+          .leftJoin(
+            submissions,
+            and(
+              eq(submissions.sessionId, ch.sessionId),
+              eq(submissions.userId, sessionParticipants.userId)
+            )
+          )
+          .where(eq(sessionParticipants.sessionId, ch.sessionId));
+
+        const mapped = participants.map((p) => ({
+          ...p,
+          status: p.submissionId
+            ? p.evaluatedAt
+              ? "EVALUATED"
+              : "PENDING"
+            : p.startedAt
+            ? "IN_PROGRESS"
+            : "REGISTERED",
+        }));
+
+        const evaluated = mapped.filter((p) => p.status === "EVALUATED");
+        const avgScore =
+          evaluated.length > 0
+            ? Math.round(
+                evaluated.reduce((s, p) => s + (p.aiScore ?? 0), 0) /
+                  evaluated.length
+              )
+            : null;
+        const topScore =
+          evaluated.length > 0
+            ? Math.max(...evaluated.map((p) => p.aiScore ?? 0))
+            : null;
+
+        return {
+          challengeId: ch.challengeId,
+          title: ch.title,
+          difficulty: ch.difficulty,
+          challengeType: ch.challengeType,
+          sessionId: ch.sessionId,
+          sessionStatus: ch.sessionStatus,
+          startTime: ch.startTime,
+          endTime: ch.endTime,
+          totalParticipants: mapped.length,
+          totalSubmitted: mapped.filter((p) => p.submissionId).length,
+          avgScore,
+          topScore,
+          participants: mapped,
+        };
+      })
+    );
+
+    return res.status(200).json({ challenges: result });
+  } catch (error) {
+    console.error("Get all submissions error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
