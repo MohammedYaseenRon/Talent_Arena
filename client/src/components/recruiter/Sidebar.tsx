@@ -9,6 +9,8 @@ import {
   Settings,
   Zap,
   Tags,
+  ListVideo,
+  User,
 } from "lucide-react";
 import {
   Sidebar,
@@ -46,15 +48,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 const mainItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Problems", url: "/recruiter/problems", icon: Code2 },
   { title: "Challenges", url: "/recruiter/challenges", icon: Code2 },
-  { title: "Users", url: "/users", icon: Users },
-  { title: "Contests", url: "/contests", icon: Trophy },
-  { title: "Submissions", url: "/submissions", icon: FileText },
+  { title: "Live", url: "/recruiter/live", icon: ListVideo },
+  { title: "Submission", url: "/recruiter/submission", icon: Trophy },
+  { title: "Leaderboard", url: "/recruiter/leaderboard", icon: User },
 ];
 
 const manageItems = [
-  { title: "Tags", url: "/tags", icon: Tags },
+  // { title: "Tags", url: "/tags", icon: Tags },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 

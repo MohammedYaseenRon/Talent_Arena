@@ -6,7 +6,6 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import api from "@/lib/axios";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Challenge {
   challengeId: string;
@@ -32,7 +31,6 @@ const DURATION_PRESETS = [
   { label: "3 hrs",   minutes: 180 },
 ];
 
-// ─── Existing session row ─────────────────────────────────────────────────────
 
 function SessionRow({ session }: { session: Session }) {
   const statusStyles = {
@@ -65,7 +63,6 @@ function SessionRow({ session }: { session: Session }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ScheduleSessionPage() {
   const router = useRouter();
@@ -91,7 +88,6 @@ export default function ScheduleSessionPage() {
   const [endTime, setEndTime] = useState("");
   const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
 
-  // Load challenge + existing sessions
   useEffect(() => {
     const load = async () => {
       try {
@@ -110,7 +106,6 @@ export default function ScheduleSessionPage() {
     if (challengeId) load();
   }, [challengeId]);
 
-  // Apply duration preset
   const applyPreset = (minutes: number, idx: number) => {
     setSelectedPreset(idx);
     if (!startTime) return;
@@ -162,7 +157,6 @@ export default function ScheduleSessionPage() {
     );
   }
 
-  // Duration display
   const getDurationLabel = () => {
     if (!startTime || !endTime) return null;
     const diff = new Date(endTime).getTime() - new Date(startTime).getTime();
