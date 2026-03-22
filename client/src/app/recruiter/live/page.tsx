@@ -6,16 +6,15 @@ import toast from "react-hot-toast";
 import api from "@/lib/axios";
 import { Radio, Users, Clock, ArrowLeft } from "lucide-react";
 import { Difficulty, ChallengeType } from "@/types";
-import { LiveChallenge,Pagination } from "@/types";
+import { LiveChallenge, Pagination } from "@/types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL + "/challenge";
 const PAGE_LIMIT = 9;
 
-
 const difficultyStyles: Record<Difficulty, string> = {
-  EASY: "text-emerald-400 bg-emerald-950 border-emerald-900",
-  MEDIUM: "text-amber-400 bg-amber-950 border-amber-900",
-  HARD: "text-red-400 bg-red-950 border-red-900",
+  EASY:   "text-emerald-600 dark:text-emerald-400 bg-emerald-50   dark:bg-emerald-950   border-emerald-200 dark:border-emerald-900",
+  MEDIUM: "text-amber-600  dark:text-amber-400  bg-amber-50    dark:bg-amber-950    border-amber-200  dark:border-amber-900",
+  HARD:   "text-red-600    dark:text-red-400    bg-red-50      dark:bg-red-950      border-red-200    dark:border-red-900",
 };
 
 const typeLabels: Record<ChallengeType, string> = {
@@ -59,7 +58,7 @@ function LiveCard({ challenge }: { challenge: LiveChallenge }) {
 
   return (
     <div
-      className="group relative bg-slate-950 border border-emerald-900/40 hover:border-emerald-700/60 transition-all duration-200 cursor-pointer overflow-hidden"
+      className="group relative bg-white dark:bg-slate-950 border border-emerald-200 dark:border-emerald-900/40 hover:border-emerald-400 dark:hover:border-emerald-700/60 transition-all duration-200 cursor-pointer overflow-hidden rounded-xl shadow-sm dark:shadow-none"
       onClick={() => router.push(`/recruiter/challenges/${challenge.challengeId}/sessions/${challenge.sessionId}/submissions`)}
     >
       <div className="h-0.5 w-full bg-gradient-to-r from-emerald-500/0 via-emerald-500 to-emerald-500/0" />
@@ -67,55 +66,55 @@ function LiveCard({ challenge }: { challenge: LiveChallenge }) {
       <div className="p-5">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 border border-emerald-900/40 text-emerald-400">
+            <span className="inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 border border-emerald-200 dark:border-emerald-900/40 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-transparent rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Live
             </span>
-            <span className={`text-xs font-mono px-2 py-0.5 border ${difficultyStyles[challenge.difficulty]}`}>
+            <span className={`text-xs font-mono px-2 py-0.5 border rounded-sm ${difficultyStyles[challenge.difficulty]}`}>
               {challenge.difficulty}
             </span>
           </div>
-          <span className="text-xs font-mono text-slate-600 shrink-0">
+          <span className="text-xs font-mono text-slate-400 dark:text-slate-600 shrink-0">
             {typeLabels[challenge.challengeType]}
           </span>
         </div>
 
-        <h3 className="text-sm font-bold text-slate-100 leading-snug mb-1 group-hover:text-white transition-colors">
+        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-snug mb-1 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
           {challenge.title}
         </h3>
 
         {challenge.description && (
-          <p className="text-xs font-mono text-slate-600 line-clamp-2 leading-relaxed mb-3">
+          <p className="text-xs font-mono text-slate-500 dark:text-slate-600 line-clamp-2 leading-relaxed mb-3">
             {challenge.description}
           </p>
         )}
 
         <div className="flex items-center gap-4 mt-3">
           <div className="flex items-center gap-1.5">
-            <Users size={12} className="text-slate-500" />
-            <span className="text-xs font-mono text-slate-400">
+            <Users size={12} className="text-slate-400 dark:text-slate-500" />
+            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
               {challenge.participantCount ?? 0} joined
             </span>
           </div>
           {(challenge.submittedCount ?? 0) > 0 && (
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-violet-500" />
-              <span className="text-xs font-mono text-violet-400">
+              <span className="text-xs font-mono text-violet-600 dark:text-violet-400">
                 {challenge.submittedCount} submitted
               </span>
             </div>
           )}
         </div>
 
-        <div className="mt-4 pt-4 border-t border-slate-900 flex items-center justify-between gap-2">
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-900 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Clock size={12} className={isDanger ? "text-red-400" : isUrgent ? "text-amber-400" : "text-slate-500"} />
+            <Clock size={12} className={isDanger ? "text-red-500" : isUrgent ? "text-amber-500" : "text-slate-400 dark:text-slate-500"} />
             <span className={`text-sm font-mono font-bold tabular-nums
-              ${isDanger ? "text-red-400" : isUrgent ? "text-amber-400" : "text-emerald-400"}`}
+              ${isDanger ? "text-red-600 dark:text-red-400" : isUrgent ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}
             >
               {display}
             </span>
-            <span className="text-xs font-mono text-slate-600">remaining</span>
+            <span className="text-xs font-mono text-slate-400 dark:text-slate-600">remaining</span>
           </div>
 
           <button
@@ -123,7 +122,7 @@ function LiveCard({ challenge }: { challenge: LiveChallenge }) {
               e.stopPropagation();
               router.push(`/recruiter/challenges/${challenge.challengeId}/sessions/${challenge.sessionId}/submissions`);
             }}
-            className="text-xs font-mono text-emerald-400 hover:text-emerald-300 transition-colors px-3 py-1.5 border border-emerald-900/60 hover:border-emerald-700 bg-emerald-950/40"
+            className="text-xs font-mono text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors px-3 py-1.5 border border-emerald-200 dark:border-emerald-900/60 hover:border-emerald-300 dark:hover:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 rounded"
           >
             View Submissions →
           </button>
@@ -166,45 +165,43 @@ export default function LivePage() {
   }, [fetchLive]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-emerald-950 text-slate-100 p-3">
-      <div className="max-w-7xl mx-auto px-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#080810] text-slate-900 dark:text-slate-100 p-3">
+      <div className="w-full px-4">
 
-        {/* Header */}
         <div className="mb-8">
           <button
             onClick={() => router.push("/recruiter/challenges")}
-            className="flex items-center gap-1.5 text-xs font-mono text-slate-600 hover:text-slate-400 transition-colors mb-3"
+            className="flex items-center gap-1.5 text-xs font-mono text-slate-500 dark:text-slate-600 hover:text-slate-700 dark:hover:text-slate-400 transition-colors mb-3"
           >
             <ArrowLeft size={12} />
             Back to Challenges
           </button>
           <div className="flex items-center gap-3">
-            <Radio size={20} className="text-emerald-400 animate-pulse" />
-            <h1 className="text-3xl font-bold text-slate-100 tracking-tight">Live Now</h1>
+            <Radio size={20} className="text-emerald-500 dark:text-emerald-400 animate-pulse" />
+            <h1 className="text-2xl font-bold font-mono text-slate-900 dark:text-white tracking-tight">Live Now</h1>
           </div>
         </div>
 
-        {/* Content */}
         {loading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="text-xs font-mono text-slate-700 tracking-widest animate-pulse">
+            <div className="text-xs font-mono text-slate-400 dark:text-slate-700 tracking-widest animate-pulse">
               Loading live challenges…
             </div>
           </div>
         ) : challenges.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 gap-3">
-            <Radio size={32} className="text-slate-800" />
-            <p className="text-sm font-mono text-slate-700">No challenges are live right now</p>
+            <Radio size={32} className="text-slate-300 dark:text-slate-800" />
+            <p className="text-sm font-mono text-slate-400 dark:text-slate-700">No challenges are live right now</p>
             <button
               onClick={() => router.push("/recruiter/challenges")}
-              className="mt-2 text-xs font-mono text-violet-500 hover:text-violet-400 underline underline-offset-4"
+              className="mt-2 text-xs font-mono text-violet-600 dark:text-violet-500 hover:text-violet-700 dark:hover:text-violet-400 underline underline-offset-4"
             >
               ← Back to challenges
             </button>
           </div>
         ) : (
           <>
-            <p className="text-xs font-mono text-slate-600 mb-4">
+            <p className="text-xs font-mono text-slate-400 dark:text-slate-600 mb-4">
               {pagination.total} challenge{pagination.total > 1 ? "s" : ""} currently live
             </p>
 
@@ -214,17 +211,16 @@ export default function LivePage() {
               ))}
             </div>
 
-            {}
             {pagination.totalPages > 1 && (
-              <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-800">
-                <span className="text-xs font-mono text-slate-600">
+              <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
+                <span className="text-xs font-mono text-slate-400 dark:text-slate-600">
                   Showing {challenges.length} of {pagination.total}
                 </span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => fetchLive(pagination.page - 1)}
                     disabled={!pagination.hasPrev || loading}
-                    className="px-3 py-1.5 text-xs font-mono border border-slate-800 text-white hover:border-slate-600 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-1.5 text-xs font-mono border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-800 dark:hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded"
                   >
                     ← Prev
                   </button>
@@ -232,10 +228,10 @@ export default function LivePage() {
                     <button
                       key={p}
                       onClick={() => fetchLive(p)}
-                      className={`px-3 py-1.5 text-xs font-mono border transition-colors
+                      className={`px-3 py-1.5 text-xs font-mono border transition-colors rounded
                         ${pagination.page === p
-                          ? "border-emerald-500 text-emerald-400 bg-emerald-950/40"
-                          : "border-slate-800 text-slate-600 hover:border-slate-600 hover:text-slate-300"
+                          ? "border-emerald-400 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
+                          : "border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-600 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-700 dark:hover:text-slate-300"
                         }`}
                     >
                       {p}
@@ -244,7 +240,7 @@ export default function LivePage() {
                   <button
                     onClick={() => fetchLive(pagination.page + 1)}
                     disabled={!pagination.hasNext || loading}
-                    className="px-3 py-1.5 text-xs font-mono border border-slate-800 text-white hover:border-slate-600 hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-1.5 text-xs font-mono border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-800 dark:hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded"
                   >
                     Next →
                   </button>

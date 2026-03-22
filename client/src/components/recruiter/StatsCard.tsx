@@ -16,7 +16,7 @@ const StatsCard = ({ title, icon: Icon, value, change }: StatsCardProps) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.1 }}
-      className="bg-card rounded-xl p-5 border border-black hover:border-primary/30 transition-all group"
+      className="bg-white dark:bg-slate-900/50 rounded-xl p-5 border border-gray-300 dark:border-gray-900 hover:border-primary/30 transition-all group"
     >
       <div className="flex items-start justify-between">
         <div>

@@ -47,7 +47,7 @@ import { useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 const mainItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/recruiter", icon: LayoutDashboard },
   { title: "Challenges", url: "/recruiter/challenges", icon: Code2 },
   { title: "Live", url: "/recruiter/live", icon: ListVideo },
   { title: "Submission", url: "/recruiter/submission", icon: Trophy },

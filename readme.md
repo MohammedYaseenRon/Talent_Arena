@@ -1,89 +1,248 @@
-```markdown
 # HireMe Pro
 
-A full-stack technical hiring platform that lets recruiters create coding challenges, evaluate candidates in real-time, and make data-driven hiring decisions powered by AI.
+> A full-stack technical hiring platform — create coding challenges, evaluate candidates with AI, and make data-driven hiring decisions.
 
 ![Dashboard Preview](./screenshots/dashboard.png)
 
+---
+
 ## Overview
 
-HireMe Pro streamlines the technical hiring process end-to-end. Recruiters create frontend coding challenges, schedule timed sessions, and let candidates attempt them directly in the browser — no setup required. Once submitted, an AI model automatically evaluates each submission and scores it against the challenge requirements, giving recruiters instant, objective feedback on every candidate.
+**HireMe Pro** streamlines the entire technical hiring workflow — from challenge creation to AI-powered evaluation.
 
-**Why HireMe Pro?**
-- **No manual review bottleneck** — AI scores submissions the moment they're submitted, so recruiters see results instantly instead of waiting hours to review code manually.
-- **Real hiring signal** — candidates write real code in a real editor with a live preview, not just multiple choice or toy problems.
-- **Full context for decisions** — recruiters get a score, breakdown, strengths, missing features, and can open the actual code in a read-only review page.
+Recruiters can create real-world frontend challenges, schedule live sessions, and allow candidates to code directly in the browser (no setup required). Once submitted, **AI evaluates the code instantly**, providing structured feedback and scoring.
+
+---
+
+## Why HireMe Pro?
+
+* **No manual review bottleneck**
+  AI evaluates submissions instantly — no waiting hours for code reviews
+
+* **Real hiring signal**
+  Candidates write real code in a live environment (not MCQs)
+
+* **Data-driven decisions**
+  Get scores, breakdowns, strengths, and improvement areas
+
+* **Real-time updates**
+  Leaderboards update live using WebSockets
+
+---
 
 ## Key Features
 
-**For Recruiters**
-- Create challenges with task descriptions, required features, design references, and tech constraints
-- Schedule timed sessions — platform auto-transitions SCHEDULED → LIVE → ENDED via cron
-- Watch a live leaderboard update in real-time as candidates submit (Socket.io)
-- Every submission is auto-evaluated by Gemini AI — score, breakdown, strengths, improvements
-- Open any candidate's code in a read-only Sandpack editor with live preview
+### For Recruiters
 
-**For Candidates**
-- Clean challenge instructions page with session countdown and registration
-- Full in-browser IDE — file explorer, Monaco editor, live preview, tab management
-- Timer auto-submits code when session ends so no work is lost
-- Results page shows AI score, summary, and detailed feedback after submission
+* **Challenge Builder**
+  Create tasks with requirements, constraints, design refs & starter code
+
+* **Session Lifecycle Automation**
+  Auto transitions: `SCHEDULED → LIVE → ENDED` via cron jobs
+
+* **Live Leaderboard**
+  Real-time ranking updates using Socket.io
+
+* **AI Evaluation (Gemini)**
+
+  * Overall score
+  * Multi-dimensional breakdown
+  * Strengths & improvements
+  * Feature completion tracking
+
+* **Code Review System**
+  Read-only Sandpack editor with live preview of candidate code
+
+---
+
+### For Candidates
+
+* **Instructions Page**
+  Session rules, countdown timer, and quick start
+
+* **In-Browser IDE**
+
+  * File explorer
+  * Code editor
+  * Live preview
+  * Auto-submit timer
+
+* **Results & Feedback**
+  AI-generated score, summary, and detailed feedback
+
+---
 
 ## Screenshots
 
-| Challenges | Attempt Page |
-|---|---|
-| ![Challenges](./screenshots/challenges.png) | ![Attempt](./screenshots/attempt.png) |
+### Recruiter Dashboard
 
-| Leaderboard | Code Review |
-|---|---|
-| ![Leaderboard](./screenshots/leaderboard.png) | ![Code Review](./screenshots/code-review.png) |
+<p align="center">
+  <img src="./screenshots/challenges.png" alt="Challenges" width="45%" />
+  <img src="./screenshots/live.png" alt="Live Sessions" width="45%" />
+</p>
 
-## Tech Stack
+---
 
-| Layer | Tech |
-|---|---|
-| Frontend | Next.js, TypeScript, Tailwind CSS, Sandpack |
-| Backend | Node.js, Express.js, TypeScript |
-| Database | PostgreSQL, Drizzle ORM |
-| Auth | JWT + Refresh Tokens |
-| AI Evaluation | Gemini 1.5 Flash |
-| Real-time | Socket.io |
-| File Upload | Cloudinary |
-| Cron Jobs | node-cron (session lifecycle) |
+### Review & Analysis
+
+<p align="center">
+  <img src="./screenshots/leaderboard.png" alt="Leaderboard" width="45%" />
+  <img src="./screenshots/code-review.png" alt="Code Review" width="45%" />
+</p>
+
+---
+
+### Candidate Flow
+
+<p align="center">
+  <img src="./screenshots/instructions.png" alt="Instructions" width="45%" />
+  <img src="./screenshots/attempt.png" alt="Attempt Page" width="45%" />
+</p>
+
+---
+
+## 🛠 Tech Stack
+
+### Frontend
+
+| Tech             | Usage             |
+| ---------------- | ----------------- |
+| Next.js 14       | App Router, SSR   |
+| TypeScript       | Type safety       |
+| Tailwind CSS     | Styling           |
+| Sandpack         | In-browser IDE    |
+| Socket.io Client | Real-time updates |
+| shadcn/ui        | UI components     |
+
+---
+
+### ⚙️ Backend
+
+| Tech              | Usage              |
+| ----------------- | ------------------ |
+| Node.js + Express | REST API           |
+| TypeScript        | Type safety        |
+| PostgreSQL        | Database           |
+| Drizzle ORM       | Type-safe queries  |
+| Socket.io         | Real-time events   |
+| node-cron         | Session automation |
+| Cloudinary        | File uploads       |
+| Gemini 1.5 Flash  | AI evaluation      |
+| JWT               | Authentication     |
+
+---
 
 ## Getting Started
 
+### Prerequisites
+
+* Node.js 18+
+* PostgreSQL
+* Gemini API Key → https://aistudio.google.com
+* Cloudinary Account
+
+---
+
+### Installation
+
+#### Clone Repository
+
 ```bash
-# Backend
+git clone https://github.com/yourusername/hireme-pro.git
+cd hireme-pro
+```
+
+---
+
+#### Backend Setup
+
+```bash
 cd server
 npm install
 cp .env.example .env
-npm run dev
+```
 
-# Frontend
+Fill environment variables, then:
+
+```bash
+npx drizzle-kit migrate
+npm run dev
+```
+
+---
+
+#### Frontend Setup
+
+```bash
 cd client
 npm install
 cp .env.example .env.local
 npm run dev
 ```
 
+---
+
 ## Environment Variables
 
+### Backend `.env`
+
 ```env
-# Backend
-DATABASE_URL=
-JWT_SECRET=
-GEMINI_API_KEY=
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
-CLIENT_URL=
-
-# Frontend
-NEXT_PUBLIC_API_URL=
+DATABASE_URL=postgresql://user:password@localhost:5432/hireme
+JWT_SECRET=your_jwt_secret
+JWT_REFRESH_SECRET=your_refresh_secret
+GEMINI_API_KEY=your_gemini_api_key
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+CLIENT_URL=http://localhost:3000
+PORT=4000
 ```
 
-## License
+---
+
+### Frontend `.env.local`
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000
+```
+
+---
+
+## Project Structure
+
+```
+hireme-pro/
+├── client/                 # Next.js frontend
+│   ├── app/
+│   │   ├── recruiter/      # Recruiter dashboard
+│   │   └── challenges/     # Candidate flow
+│   └── components/
+│
+└── server/                 # Express backend
+    ├── controllers/
+    ├── routes/
+    ├── services/
+    │   ├── evaluateSubmission.ts
+    │   └── cron.service.ts
+    ├── lib/
+    │   └── socket.ts
+    └── db/
+        └── schema.ts
+```
+---
+
+## 📄 License
+
 MIT
-```
+
+---
+
+## Contributing
+
+Contributions are welcome! Feel free to open issues or submit PRs.
+
+---
+
+## Support
+
+If you like this project, consider giving it a on GitHub!
