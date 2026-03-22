@@ -86,9 +86,9 @@ Recruiters can create real-world frontend challenges, schedule live sessions, an
 ### Review & Analysis
 
 <p align="center">
-  <img src="./screenshots/leaderboard.png" alt="Leaderboard" width="45%" />
-  <img src="./screenshots/review.png" alt="Code Review" width="45%" />
-  <img src="./screenshots/ai.png" alt="AI Analysis" width="45%" />
+  <img src="./screenshots/leaderboard.png" alt="Leaderboard" width="50%" />
+  <img src="./screenshots/review.png" alt="Code Review" width="50%" />
+  <img src="./screenshots/ai.png" alt="AI Analysis" width="50%" />
 </p>
 
 ---
