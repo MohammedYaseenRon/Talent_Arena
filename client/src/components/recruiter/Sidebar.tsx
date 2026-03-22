@@ -78,17 +78,16 @@ export function AdminSidebar() {
     <Sidebar className="border-r border-border">
       <SidebarHeader className="p-4 border-b border-border">
         <div className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-lg bg-blue-600 flex items-center justify-center">
-            <Zap className="h-5 w-5 text-white" />
+          <div className="h-7 w-7 rounded-lg bg-violet-600 hover:bg-violet-500 flex items-center justify-center">
+            <Zap className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h1 className="text-base font-bold tracking-tight">CodeArena</h1>
+            <h1 className="text-base font-bold tracking-tight">Talent_Arena</h1>
           </div>
         </div>
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-3">
-        {/* MAIN */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground/60 font-semibold mb-1">
             Main

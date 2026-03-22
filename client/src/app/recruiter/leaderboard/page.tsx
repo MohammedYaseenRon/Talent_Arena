@@ -71,14 +71,14 @@ function ExpandedDetail({ p }: { p: Participant }) {
   return (
     <TableRow className="hover:bg-transparent border-0">
       <TableCell colSpan={8} className="p-0 border-0">
-        <div className="mx-3 mb-3 p-5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/50 rounded-xl">
+        <div className="mx-3 mb-3 p-5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/50 break-words whitespace-pre-wrap">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <div className="flex items-center gap-1.5 mb-2">
                 <Bot size={11} className="text-violet-500 dark:text-violet-400" />
                 <span className="text-xs font-mono text-violet-600 dark:text-violet-400 uppercase tracking-widest">AI Summary</span>
               </div>
-              <p className="text-xs font-mono text-slate-600 dark:text-slate-400 leading-relaxed break-words">{p.aiSummary}</p>
+              <p className="text-xs font-mono text-slate-600 dark:text-slate-400 leading-relaxed">{p.aiSummary}</p>
             </div>
             <div>
               <span className="text-xs font-mono text-slate-400 dark:text-slate-600 uppercase tracking-widest block mb-3">Score Breakdown</span>
@@ -452,7 +452,6 @@ export default function LeaderboardPage() {
               </div>
             )}
 
-            {/* Pending notice */}
             {pending.length > 0 && (
               <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 rounded-lg">
                 <Loader2 size={12} className="animate-spin text-amber-500" />
@@ -460,7 +459,6 @@ export default function LeaderboardPage() {
               </div>
             )}
 
-            {/* Table */}
             {sorted.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-40 gap-2 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-transparent">
                 <AlertCircle size={20} className="text-slate-300 dark:text-slate-700" />

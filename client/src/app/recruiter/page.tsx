@@ -89,7 +89,6 @@ export default function RecruiterDashboard() {
         const counts = allRes.data.counts ?? {};
         const allSubmissions = subsRes.data.challenges ?? [];
 
-        // Collect all participants with submissions
         const allParticipants = allSubmissions.flatMap((ch: any) =>
           ch.participants.map((p: any) => ({ ...p, challengeTitle: ch.title, challengeId: ch.challengeId, sessionId: ch.sessionId }))
         );
@@ -100,19 +99,16 @@ export default function RecruiterDashboard() {
         const scoreMid    = evaluated.filter((p: any) => p.aiScore >= 60 && p.aiScore < 80).length;
         const scoreLow    = evaluated.filter((p: any) => p.aiScore < 60).length;
 
-        // Recent submissions (sorted by submittedAt)
         const recentSubs = [...allParticipants]
           .filter((p: any) => p.submittedAt)
           .sort((a: any, b: any) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
           .slice(0, 5);
 
-        // Upcoming sessions
         const upcoming = challenges
           .filter((c: any) => c.uiStatus === "SCHEDULED" && c.startTime)
           .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
           .slice(0, 4);
 
-        // Live challenges
         const live = challenges.filter((c: any) => c.uiStatus === "LIVE");
 
         setDashData({
