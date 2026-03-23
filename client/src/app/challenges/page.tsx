@@ -9,6 +9,7 @@ import {
   Timer,
   Radio,
   Flag,
+  LogOut,
 } from "lucide-react";
 import {
   Select,
@@ -22,6 +23,18 @@ import Link from "next/link";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
+import { useAuth } from "../context'/authContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 type Difficulty = "EASY" | "MEDIUM" | "HARD" | "All";
 type ChallengeType = "FRONTEND" | "BACKEND" | "DSA" | "SYSTEM_DESIGN" | "All";
@@ -248,7 +261,7 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
             {challenge.status === "LIVE" && (
               <button
                 onClick={(e) => {
-                  e.stopPropagation(); 
+                  e.stopPropagation();
                   router.push(
                     `/challenges/${challenge.challengeId}/instructions?session=${challenge.sessionId}`,
                   );
@@ -259,7 +272,10 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
               </button>
             )}
             {challenge.status === "SCHEDULED" && (
-              <button onClick={handleNavigate} className="inline-flex items-center gap-1 text-xs font-mono px-3 py-1.5 border border-slate-700 text-slate-400 group-hover:border-blue-700 group-hover:text-blue-400 transition-colors">
+              <button
+                onClick={handleNavigate}
+                className="inline-flex items-center gap-1 text-xs font-mono px-3 py-1.5 border border-slate-700 text-slate-400 group-hover:border-blue-700 group-hover:text-blue-400 transition-colors"
+              >
                 View Details <ChevronRight className="w-3 h-3" />
               </button>
             )}
@@ -309,11 +325,14 @@ const ChallengesPage = () => {
   const [upcomingChallenges, setUpcomingChallenges] = useState<Challenge[]>([]);
   const [endedChallenges, setEndedChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user, logout } = useAuth();
+  const router = useRouter();
 
   const fetchLive = async () => {
     try {
       const res = await api.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/challenge/live`);
+        `${process.env.NEXT_PUBLIC_API_URL}/challenge/live`,
+      );
       setLiveChallenges(res.data.challenges || []);
     } catch (e) {
       console.error(e);
@@ -323,7 +342,8 @@ const ChallengesPage = () => {
   const fetchUpcoming = async () => {
     try {
       const res = await api.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/challenge/upcoming`);
+        `${process.env.NEXT_PUBLIC_API_URL}/challenge/upcoming`,
+      );
       setUpcomingChallenges(res.data.challenges || []);
     } catch (e) {
       console.error(e);
@@ -333,7 +353,8 @@ const ChallengesPage = () => {
   const fetchEnded = async () => {
     try {
       const res = await api.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/challenge/ended`);
+        `${process.env.NEXT_PUBLIC_API_URL}/challenge/ended`,
+      );
       setEndedChallenges(res.data.challenges || []);
     } catch (e) {
       console.error(e);
@@ -381,6 +402,11 @@ const ChallengesPage = () => {
     (c) => selectedStatus === "All" || c.status === selectedStatus,
   );
 
+  const handleLogout = async () => {
+    await logout();
+    router.push("/"); 
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -396,6 +422,46 @@ const ChallengesPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="w-full border h-16 flex items-center justify-between px-12">
+        <h2 className="font-mono font-bold text-black dark:text-white text-lg lg:text-xl">
+          Talent_Arena
+        </h2>
+        <div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="w-full flex items-center gap-3 px-3 py-2 h-auto justify-start"
+              >
+                <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
+                  <Avatar>
+                    <AvatarFallback>
+                      {user?.name?.charAt(0).toLocaleUpperCase() ?? "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+                <div className="flex flex-col items-start text-left overflow-hidden">
+                  <span className="text-sm font-medium truncate w-full">
+                    {user?.name ?? "User"}
+                  </span>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-52" align="end" side="top">
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="text-red-500 focus:text-red-500 focus:bg-red-500/10 cursor-pointer"
+              >
+                <span>Log out</span>
+                <DropdownMenuShortcut>
+                  <LogOut />
+                </DropdownMenuShortcut>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-10">

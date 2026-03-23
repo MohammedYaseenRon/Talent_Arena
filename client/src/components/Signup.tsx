@@ -203,7 +203,7 @@ export default function SignupPage() {
             <p className="text-slate-400 text-sm font-mono">
               Already a warrior?{" "}
               <Link
-                href="/login"
+                href="/auth/login"
                 className="text-purple-400 hover:text-purple-300 font-bold underline underline-offset-2 transition-colors"
               >
                 Login here

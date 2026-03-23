@@ -1,96 +1,35 @@
 "use client";
 
-import { Bell, Menu, Search, X } from "lucide-react";
-import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Button } from "./ui/button";
-import { ModeToggle } from "./Darkmode";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-
-interface NavTypes {
-  title: string;
-  href: string;
-}
-
-const navItems: NavTypes[] = [
-  { title: "Explore", href: "/explore" },
-  { title: "Problems", href: "/problems" },
-  { title: "Challenge", href: "/challenges" },
-  { title: "Discuss", href: "/discuss" },
-];
+import React from 'react'
+import { cn } from '@/lib/utils';
+import { GradientButton } from './ui/GradientButton';
+import Image from 'next/image';
+import { ModeToggle } from './Darkmode';
+import Link from 'next/link';
 
 const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const router = useRouter();
-  return (
-    <nav className="fixed top-0 right-0 left-0 z-50 backdrop-blur-sm transform transition-transform duration-300 ease-out">
-      <div className="flex w-full items-center justify-between px-10 md:px-12">
-        <div className="flex items-center gap-8">
-          <h1 className="text-2xl font-semibold mb-1">BeatMe</h1>
-          <ul className="hidden lg:flex items-start gap-4">
-            {navItems.map((nav) => (
-              <li key={nav.href}>
-                <Link
-                  className="py-4 inline-block text-gray-400 hover:text-white"
-                  href={nav.href}
-                >
-                  {nav.title}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="hidden lg:flex items-center gap-2 relative">
-            <Search className="w-4 h-4 inline-flex absolute ml-2" />
-            <input
-              type="text"
-              placeholder="Search"
-              className="pl-9 border rounded-xl border-black h-9"
-            />
-          </div>
-          <div className="hidden lg:flex items-center gap-2">
-            <Bell className="w-4 h-4" />
-            <ModeToggle />
-            {/* <Avatar>
-              <AvatarImage src="https://github.com/shadcn.png" />
-              <AvatarFallback>CN</AvatarFallback>
-            </Avatar> */}
-            <Link href="/auth/login"><Button className="text-base bg-orange-600 shadow-lg dark:text-white hover:bg-orange-600 rounded-lg">Login</Button></Link>
-            <Button className="text-base rounded-lg">Premium</Button>
-          </div>
-          <div>
-            <Button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden"
-            >
-              {isMenuOpen ? <X /> : <Menu />}
-            </Button>
-          </div>
-        </div>
-      </div>
-      {isMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-background flex flex-col p-6 md:hidden">
-          <ul className="flex items-center gap-4">
-            <li>
-              <h1 className="text-2xl font-semibold mb-1">BeatMe</h1>
-            </li>
-            {navItems.map((nav) => (
-              <li key={nav.href}>
-                <Link
-                  className="py-4 inline-block text-gray-400 hover:text-white"
-                  href={nav.href}
-                >
-                  {nav.title}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </nav>
-  );
-};
+    return (
+        <div className='fixed top-0 left-0 w-full z-50'>
+            <div className={cn("py-2 flex md:mt-4 items-center justify-between max-w-6xl mx-auto px-3 md:px-5 rounded-xl bg-white/40 md:rounded-2xl backdrop-blur-md dark:bg-black/40 border shadow-lg transition-all duration-300")}>
+                <div className='flex items-center gap-2 py-2 md:py-4 px-1 md:px-2 rounded-md'>
+                  <Image
+                      width={40}
+                      height={40}
+                      alt='Logo'
+                      src="/cross.png"
+                      className='w-10 md:w-10 object-contain mix-blend-screen dark:mix-blend-screen invert-0'
+                  />
+                  <h2 className='text-2xl font-bold font-mono'>Talent_Arena</h2>
+                </div>
 
-export default Navbar;
+                <div className='flex items-center gap-4'>
+                    <ModeToggle />
+                    <Link href="/auth/signup"><GradientButton text='Signup' size='md' variant='white' /></Link>
+                    <Link href="/auth/login"><GradientButton text='Login' size='md' variant='orange' /></Link>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+export default Navbar
