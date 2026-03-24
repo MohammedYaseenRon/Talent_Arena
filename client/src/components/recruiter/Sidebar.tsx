@@ -77,7 +77,7 @@ export function AdminSidebar() {
   return (
     <Sidebar className="border-r border-border">
       <SidebarHeader className="p-4 border-b border-border">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 h-9">
           <div className="h-7 w-7 rounded-lg bg-violet-600 hover:bg-violet-500 flex items-center justify-center">
             <Zap className="h-4 w-4 text-white" />
           </div>

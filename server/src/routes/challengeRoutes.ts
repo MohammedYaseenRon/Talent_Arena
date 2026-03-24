@@ -34,7 +34,7 @@ router.post("/", uploadDesignImages, authenticateToken, createChallenge);
 router.get("/:challengeId/submissions",authenticateToken,getSessionSubmission);
 router.get("/:challengeId/attempt-data", authenticateToken, getAttemptData);
 router.get("/:challengeId/instructions", authenticateToken, getChallenegeInstruction);
-router.patch("/:challengeId/update", authenticateToken, updateChallenge);
+router.patch("/:challengeId", uploadDesignImages,authenticateToken, updateChallenge);
 router.patch("/:challengeId/publish", authenticateToken, publishChallenge);
 router.post("/:challengeId/sessions", authenticateToken, createSession);
 router.get("/:challengeId/sessions", authenticateToken, getSessionsByChallenge);

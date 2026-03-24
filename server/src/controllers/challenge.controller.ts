@@ -182,7 +182,6 @@ export const getAllChallenges = async (req: Request, res: Response) => {
     const offset = (pageNum - 1) * limitNum;
     const validStatuses = ["DRAFT", "PUBLISHED", "SCHEDULED", "LIVE", "ENDED"];
 
-    // 1. Fetch all challenges for counts (lightweight — just ids + isDraft)
     const allChallenges = await db
       .select()
       .from(challenges)
@@ -266,25 +265,34 @@ function deriveUIStatus(c: {
 
 export const getChallengeById = async (req: Request, res: Response) => {
   try {
-    const challengeId = Array.isArray(req.params.challengeId)
-      ? req.params.challengeId[0]
-      : req.params.challengeId;
+    const { challengeId } = req.params as { challengeId: string };
 
-    if(!challengeId) {
-      return res.status(400).json({error: "ChallengeId is required"})
+    if (!challengeId) {
+      return res.status(400).json({ error: "ChallengeId is required" });
     }
 
-    const [challenge] = await db
-      .select()
+    const [result] = await db
+      .select({
+        challenge: challenges,
+        frontend: frontendChallenges,
+      })
       .from(challenges)
+      .leftJoin(
+        frontendChallenges,
+        eq(frontendChallenges.challengeId, challenges.id)
+      )
       .where(eq(challenges.id, challengeId))
       .limit(1);
 
-    if (!challenge) {
+    if (!result) {
       return res.status(404).json({ error: "Challenge not found" });
     }
 
-    return res.status(200).json({ challenge });
+    return res.status(200).json({
+      challenge: result.challenge,              
+      frontendDetails: result.frontend,         
+    });
+
   } catch (error) {
     console.error("Get challenge error:", error);
     return res.status(500).json({ error: "Internal server error" });
@@ -643,8 +651,10 @@ export const updateChallenge = async (req: Request, res: Response) => {
       .where(eq(challenges.id, challengeId));
 
     if (existing.challengeType === "FRONTEND" && frontendDetails) {
+      const existingImages = req.body.existingImages ? JSON.parse(req.body.existingImages) : [];
       const files = req.files as Express.Multer.File[];
       const newImages = files?.map((f: any) => f.path) ?? [];
+      const finalImages = [...existingImages, ...newImages];
 
       await db
         .update(frontendChallenges)
@@ -657,7 +667,7 @@ export const updateChallenge = async (req: Request, res: Response) => {
           ...(frontendDetails.techConstraints !== undefined && { techConstraints: frontendDetails.techConstraints || null }),
           ...(frontendDetails.starterCode !== undefined && { starterCode: frontendDetails.starterCode || null }),
           ...(frontendDetails.allowedLanguages !== undefined && { allowedLanguages: frontendDetails.allowedLanguages || null }),
-          ...(newImages.length > 0 && { designImages: newImages }),
+          ...(finalImages.length > 0 && { designImages: finalImages }),
         })
         .where(eq(frontendChallenges.challengeId, challengeId));
     }
