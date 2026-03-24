@@ -98,7 +98,7 @@ function TopBar({
   onTabClose: (path: string) => void;
 }) {
   return (
-    <div className="flex items-center bg-gray-900 border-b border-gray-700 h-9 flex-shrink-0 absolute top-0 left-0 right-0 z-10">
+    <div className="flex items-center bg-gray-900 border-b border-gray-700 h-11 flex-shrink-0 absolute top-0 left-0 right-0 z-10">
        <div className="flex items-center overflow-x-auto flex-1 scrollbar-none h-full">
         {openTabs.length === 0 ? (
           <div className="px-4 text-xs text-gray-500 italic">
@@ -110,7 +110,7 @@ function TopBar({
               key={path}
               onClick={() => onTabClick(path)}
               className={`
-                flex items-center gap-2 h-full text-sm px-4 border-r border-gray-700
+                flex items-center gap-2 h-full text-base px-4 border-r border-gray-700
                 cursor-pointer whitespace-nowrap select-none
                 ${activeFile === path ? "bg-gray-800 text-white" : "bg-gray-900 text-gray-400 hover:bg-gray-800/60"}
               `}
@@ -279,8 +279,8 @@ export default function Attempt() {
         </button>
       )}
 
-      <div className={`h-full flex-shrink-0 transition-all duration-200 ease-in-out overflow-hidden ${isSidebarOpen ? "w-64 md:w-72" : "w-0"}`}>
-        <div className="h-full w-64 md:w-72 relative">
+      <div className={`h-full flex-shrink-0 transition-all duration-200 ease-in-out overflow-hidden ${isSidebarOpen ? "w-64 md:w-112" : "w-0"}`}>
+        <div className="h-full relative">
           <ChallengeSidebar challenge={challengeDetail!} />
           <button
             onClick={() => setIsSidebarOpen(false)}
@@ -312,13 +312,14 @@ export default function Attempt() {
             )}
 
               <div ref={containerRef} style={{ display: "flex", flex: 1, height: "100%", minWidth: 0 }}>
-              <div style={{ width: `${editorFlex}%`, height: "100%", display: "flex", flexDirection: "column", position: "relative", minWidth: 0, flexShrink: 0 }}>                <EditorWithTopBar
-                  onMoreClick={handleMoreClick}
-                  challengeId={challengeId}
-                  sessionId={sessionId}
-                  endTime={session?.endTime || ""}
-                />
-              </div>
+                <div style={{ width: `${editorFlex}%`, height: "100%", display: "flex", flexDirection: "column", position: "relative", minWidth: 0, flexShrink: 0 }}>                
+                  <EditorWithTopBar
+                    onMoreClick={handleMoreClick}
+                    challengeId={challengeId}
+                    sessionId={sessionId}
+                    endTime={session?.endTime || ""}
+                  />
+                </div>
               <div style={{ width: `${100 - editorFlex}%`, height: "100%", minWidth: 0, overflow: "hidden", flexShrink: 0 }}>                
                 <SandpackPreview
                   showRefreshButton={true}

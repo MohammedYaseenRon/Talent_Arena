@@ -92,7 +92,7 @@ Recruiters can create real-world frontend challenges, schedule live sessions, an
   </tr>
   <tr>
     <td><img src="./screenshots/ai.png" width="100%" /></td>
-    <td></td>
+    <td><img src="./screenshots/submission.png" width="100%" /></td>
   </tr>
 </table>
  
@@ -100,10 +100,16 @@ Recruiters can create real-world frontend challenges, schedule live sessions, an
 
 ### Candidate Flow
 
-<p align="center">
-  <img src="./screenshots/instructions.png" alt="Instructions" width="45%" />
-  <img src="./screenshots/attempt.png" alt="Attempt Page" width="45%" />
-</p>
+<table>
+  <tr>
+    <img src="./screenshots/Instruction.png" alt="Instructions" width="100%" />
+    <img src="./screenshots/cLive.png" alt="Attempt Page" width="100%" >
+  </tr>
+  <tr>
+    <td><img src="./screenshots/attempt.png" width="100%" /></td>
+    <td><img src="./screenshots/submit.png" width="100%" /></td>
+  </tr>
+</table>
 
 ---
 

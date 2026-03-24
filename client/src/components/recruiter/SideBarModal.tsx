@@ -51,13 +51,13 @@ export function ChallengeSidebar({ challenge }: { challenge: AttemptChallenge })
           </div>
         </div>
 
-        {challenge.description && (
+        {/* {challenge.description && (
           <Section icon={<Info size={14} />} label="Description">
             <p className="text-sm text-gray-300 leading-relaxed">
               {challenge.description}
             </p>
           </Section>
-        )}
+        )} */}
 
         <Section icon={<FileText size={14} />} label="Task Description">
           <p className="text-sm text-gray-300 leading-relaxed">

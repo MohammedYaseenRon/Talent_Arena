@@ -120,7 +120,7 @@ function LiveCard({ challenge }: { challenge: LiveChallenge }) {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`/recruiter/challenges/${challenge.challengeId}/sessions/${challenge.sessionId}/submissions`);
+              router.push(`/recruiter/submission`);
             }}
             className="text-xs font-mono text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors px-3 py-1.5 border border-emerald-200 dark:border-emerald-900/60 hover:border-emerald-300 dark:hover:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 rounded"
           >
