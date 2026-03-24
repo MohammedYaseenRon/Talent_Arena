@@ -29,7 +29,7 @@ export const evaluateSubmission = async (
       .map(([path, code]) => `// FILE: ${path}\n${code}`)
       .join("\n\n---\n\n");
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `You are a senior frontend engineer evaluating a coding challenge submission.
  

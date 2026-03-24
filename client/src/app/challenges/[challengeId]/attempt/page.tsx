@@ -3,6 +3,7 @@
 import { ChallengeSidebar } from "@/components/recruiter/SideBarModal";
 import SubmitBtn from "@/components/recruiter/SubmitBtn";
 import Timer from "@/components/recruiter/Timer";
+import { ResizableDivider } from "@/components/ResizableDivider";
 import api from "@/lib/axios";
 import { AttemptChallenge, AttemptSession } from "@/types";
 import {
@@ -289,7 +290,6 @@ export default function Attempt() {
           </button>
         </div>
       </div>
-
       <div className="flex-1 min-w-0 h-full overflow-hidden">
         <SandpackProvider
           theme="dark"
@@ -312,20 +312,14 @@ export default function Attempt() {
             )}
 
               <div ref={containerRef} style={{ display: "flex", flex: 1, height: "100%", minWidth: 0 }}>
-              <div style={{ width: `${editorFlex}%`, height: "100%", display: "flex", flexDirection: "column", position: "relative", minWidth: 0 }}>
-                <EditorWithTopBar
+              <div style={{ width: `${editorFlex}%`, height: "100%", display: "flex", flexDirection: "column", position: "relative", minWidth: 0, flexShrink: 0 }}>                <EditorWithTopBar
                   onMoreClick={handleMoreClick}
                   challengeId={challengeId}
                   sessionId={sessionId}
                   endTime={session?.endTime || ""}
                 />
               </div>
-
-              {/* ✅ Drag handle */}
-              {/* <ResizableDivider onResize={handleResize} /> */}
-
-              {/* ✅ Preview with remaining width */}
-              <div style={{ flex: 1, height: "100%", minWidth: 0, overflow: "hidden" }}>
+              <div style={{ width: `${100 - editorFlex}%`, height: "100%", minWidth: 0, overflow: "hidden", flexShrink: 0 }}>                
                 <SandpackPreview
                   showRefreshButton={true}
                   showOpenInCodeSandbox={false}

@@ -95,7 +95,7 @@ Recruiters can create real-world frontend challenges, schedule live sessions, an
     <td></td>
   </tr>
 </table>
-
+ 
 ---
 
 ### Candidate Flow

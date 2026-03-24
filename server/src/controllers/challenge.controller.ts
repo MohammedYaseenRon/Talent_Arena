@@ -601,6 +601,73 @@ export const publishChallenge = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const updateChallenge = async (req: Request, res: Response) => {
+  try {
+      const { challengeId } = req.params as {
+        challengeId: string;
+      };    
+      const recruiterId = req.user?.userId;
+      if(!recruiterId) {
+        return res.status(401).json({error: "Unautorized"});
+      }
+
+      if (req.user?.role !== "RECRUITER") {
+        return res.status(403).json({ error: "Only recruiters can edit challenges" });
+      }
+
+    // Verify ownership + must be draft
+    const [existing] = await db
+      .select()
+      .from(challenges)
+      .where(and(eq(challenges.id, challengeId), eq(challenges.createdBy, recruiterId)));
+
+    if (!existing) {
+      return res.status(404).json({ error: "Challenge not found" });
+    }
+
+    if (!existing.isDraft) {
+      return res.status(400).json({ error: "Only draft challenges can be edited" });
+    }
+
+    const { title, description, difficulty, challengeType, frontendDetails } = req.body;
+
+    await db
+      .update(challenges)
+      .set({
+        ...(title && { title }),
+        ...(description !== undefined && { description: description || null }),
+        ...(difficulty && { difficulty }),
+        ...(challengeType && { challengeType }),
+      })
+      .where(eq(challenges.id, challengeId));
+
+    if (existing.challengeType === "FRONTEND" && frontendDetails) {
+      const files = req.files as Express.Multer.File[];
+      const newImages = files?.map((f: any) => f.path) ?? [];
+
+      await db
+        .update(frontendChallenges)
+        .set({
+          ...(frontendDetails.taskDescription && { taskDescription: frontendDetails.taskDescription }),
+          ...(frontendDetails.features !== undefined && { features: frontendDetails.features || null }),
+          ...(frontendDetails.optionalRequirements !== undefined && { optionalRequirements: frontendDetails.optionalRequirements || null }),
+          ...(frontendDetails.apiDetails !== undefined && { apiDetails: frontendDetails.apiDetails || null }),
+          ...(frontendDetails.submissionInstructions && { submissionInstructions: frontendDetails.submissionInstructions }),
+          ...(frontendDetails.techConstraints !== undefined && { techConstraints: frontendDetails.techConstraints || null }),
+          ...(frontendDetails.starterCode !== undefined && { starterCode: frontendDetails.starterCode || null }),
+          ...(frontendDetails.allowedLanguages !== undefined && { allowedLanguages: frontendDetails.allowedLanguages || null }),
+          ...(newImages.length > 0 && { designImages: newImages }),
+        })
+        .where(eq(frontendChallenges.challengeId, challengeId));
+    }
+
+    return res.status(200).json({ message: "Challenge updated successfully" });
+  } catch (error) {
+    console.error("Update challenge error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
 export const saveDraft = async (req: Request, res: Response) => {
   try {
     const challengeId = Array.isArray(req.params.challengeId) 

@@ -14,6 +14,7 @@ import {
   getAttemptData,
   getSessionSubmission,
   getAllChallengeSubmissions,
+  updateChallenge,
 } from "../controllers/challenge.controller.js";
 import { createSession } from "../controllers/session.controller.js";
 import { authenticateToken } from "../middleware/auth.middleware.js";
@@ -33,6 +34,7 @@ router.post("/", uploadDesignImages, authenticateToken, createChallenge);
 router.get("/:challengeId/submissions",authenticateToken,getSessionSubmission);
 router.get("/:challengeId/attempt-data", authenticateToken, getAttemptData);
 router.get("/:challengeId/instructions", authenticateToken, getChallenegeInstruction);
+router.patch("/:challengeId/update", authenticateToken, updateChallenge);
 router.patch("/:challengeId/publish", authenticateToken, publishChallenge);
 router.post("/:challengeId/sessions", authenticateToken, createSession);
 router.get("/:challengeId/sessions", authenticateToken, getSessionsByChallenge);

@@ -204,7 +204,6 @@ export default function CreateChallengeForm() {
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
-                  {/* Title */}
                   <FormField
                     control={form.control}
                     name="title"
@@ -223,7 +222,6 @@ export default function CreateChallengeForm() {
                     )}
                   />
 
-                  {/* Description */}
                   <FormField
                     control={form.control}
                     name="description"
@@ -242,7 +240,6 @@ export default function CreateChallengeForm() {
                     )}
                   />
 
-                  {/* Difficulty + Type */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <FormField
                       control={form.control}
@@ -280,10 +277,7 @@ export default function CreateChallengeForm() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="FRONTEND">Frontend</SelectItem>
-                              <SelectItem value="BACKEND">Backend</SelectItem>
-                              <SelectItem value="DSA">DSA</SelectItem>
-                              <SelectItem value="SYSTEM_DESIGN">System Design</SelectItem>
+                              <SelectItem defaultValue="FRONTEND" value="FRONTEND">Frontend</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

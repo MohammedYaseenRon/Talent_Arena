@@ -115,17 +115,8 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
 }
+/*  */
 
-.sp-preview {
-  overflow: auto !important;
-  height: 100% !important;
-}
-
-.sp-preview iframe {
-  width: 100% !important;
-  height: 100% !important;
-  overflow: auto !important;
-}
 @layer base {
   * {
     @apply border-border outline-ring/50;

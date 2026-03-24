@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import {
@@ -12,6 +12,8 @@ import {
 } from "@codesandbox/sandpack-react";
 import { ArrowLeft, Bot, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { PageData } from "@/types";
+import { ParallaxScroll } from "@/components/ui/parallax-scroll";
+import { ResizableDivider } from "@/components/ResizableDivider";
 
 export default function CodeReviewPage() {
   const params = useParams();
@@ -25,7 +27,8 @@ export default function CodeReviewPage() {
   const [data, setData] = useState<PageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [aiPanelCollapsed, setAiPanelCollapsed] = useState(false);
-
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [editorFlex, setEditorFlex] = useState(50); 
   const API = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
@@ -250,7 +253,7 @@ export default function CodeReviewPage() {
           )}
         </div>
 
-        <div className="flex-1 min-w-0 overflow-hidden">
+        <div ref={containerRef} className="flex-1 min-w-0 overflow-hidden">
           <SandpackProvider
             theme="dark"
             template="react"
@@ -277,7 +280,7 @@ export default function CodeReviewPage() {
               </div>
 
               <div style={{ display: "flex", flex: 1, height: "100%", minWidth: 0 }}>
-                <div style={{ flex: 1, height: "100%", minWidth: 0 }}>
+                <div style={{ width: `${editorFlex}%`, height: "100%", flexShrink: 0, minWidth: 0 }}>
                   <SandpackCodeEditor
                     showTabs
                     showLineNumbers
@@ -285,11 +288,19 @@ export default function CodeReviewPage() {
                     style={{ height: "100%" }}
                   />
                 </div>
-                <div style={{ flex: 1, height: "100%", minWidth: 0, overflow: "hidden", paddingBottom: "auto"}}>
-                    <SandpackPreview
+
+                <ResizableDivider
+                  containerRef={containerRef}
+                  onResize={setEditorFlex}
+                  minPercent={20}
+                  maxPercent={80}
+                  direction="horizontal"
+                />
+                <div style={{ width: `${100 - editorFlex}%`, height: "100%", flexShrink: 0, minWidth: 0, overflow: "hidden" }}>
+                  <SandpackPreview
                     showRefreshButton
                     showOpenInCodeSandbox={false}
-                    style={{ height: "100%", width: "100%" }}
+                    style={{ height: "100%", width: "100%", minHeight: "100%" }}
                   />
                 </div>
               </div>
