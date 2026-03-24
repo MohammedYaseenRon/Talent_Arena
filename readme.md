@@ -87,12 +87,12 @@ Recruiters can create real-world frontend challenges, schedule live sessions, an
 
 <table>
   <tr>
-    <td><img src="./screenshots/leaderboard.png" width="100%" /></td>
-    <td><img src="./screenshots/review.png" width="100%" /></td>
+    <img src="./screenshots/review.png" width="100%" />
+    <img src="./screenshots/ai.png" width="100%" />
   </tr>
   <tr>
-    <td><img src="./screenshots/ai.png" width="100%" /></td>
     <td><img src="./screenshots/submission.png" width="100%" /></td>
+    <td><img src="./screenshots/leaderboard.png" width="100%" /></td>
   </tr>
 </table>
  
@@ -103,11 +103,11 @@ Recruiters can create real-world frontend challenges, schedule live sessions, an
 <table>
   <tr>
     <img src="./screenshots/Instruction.png" alt="Instructions" width="100%" />
-    <img src="./screenshots/cLive.png" alt="Attempt Page" width="100%" >
+    <img src="./screenshots/attempt.png" alt="Attempt Page" width="100%" />
   </tr>
   <tr>
-    <td><img src="./screenshots/attempt.png" width="100%" /></td>
-    <td><img src="./screenshots/submit.png" width="100%" /></td>
+    <td><img src="./screenshots/cLive.png" alt="Live" width="100%"></td>
+    <td><img src="./screenshots/submit.png"alt="Submit" width="100%" /></td>
   </tr>
 </table>
 
