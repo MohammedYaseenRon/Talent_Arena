@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import React from "react";
 
 type ButtonVariant = 'orange' | 'white' | 'gray' | 'black' | 'green' | 'red';
 
@@ -58,7 +59,7 @@ export function GradientButton({
     size = "md",
     className,
     onClick,
-    disabled = false
+    disabled = false,
 }: GradientButtonProps) {
     const variantStyle = variantStyles[variant];
     const sizeStyle = sizeStyles[size];

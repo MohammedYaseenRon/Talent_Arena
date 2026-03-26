@@ -51,24 +51,15 @@ export default function LoginPage() {
       </div>
 
       <div className="w-full max-w-md relative z-10">
-        {/* Glowing card effect */}
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 blur-xl rounded-2xl"></div>
         
         <div className="relative bg-slate-950/60 backdrop-blur-xl border border-blue-500/20 rounded-2xl p-8 shadow-2xl">
-          {/* Header */}
           <div className="text-center mb-8">
-            {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl mb-4 animate-pulse">
-              <Lock className="w-8 h-8 text-white" />
-            </div> */}
             <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 mb-2" style={{ fontFamily: "'Press Start 2P', monospace, system-ui" }}>
               WARRIOR LOGIN
             </h1>
-            {/* <p className="text-slate-400 text-sm font-mono">
-              Enter your credentials and return to battle
-            </p> */}
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm font-mono flex items-center gap-2 animate-shake">

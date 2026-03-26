@@ -40,7 +40,7 @@ const AISection = () => {
         </motion.h2>
 
         <p className="text-muted-foreground text-lg mb-12">
-          Our AI doesn’t just score — it{" "}
+          Our AI doesn &&’ t just score — it{" "}
           <span className="text-foreground font-medium">understands</span> code.
         </p>
 

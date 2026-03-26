@@ -1,9 +1,11 @@
-import { Box } from "lucide-react";
+import { ArrowRight, Box } from "lucide-react";
 import { ContainerScroll } from "./ui/container-scroll-animation";
 import Image from "next/image";
 import { GradientButton } from "./ui/GradientButton";
 import { Brain, Code2, BarChart3, Zap } from "lucide-react";
 import { motion } from "framer-motion";
+import { Button } from "./ui/button";
+import Link from "next/link";
 
 const featureCards = [
   {
@@ -59,8 +61,12 @@ const Hero = () => {
               insights.
             </p>
 
-            <div className="mt-2">
-              <GradientButton variant="orange" size="lg" text="Get Started" />
+            <div className="mt-2 flex items-center gap-4">
+              <GradientButton variant="orange" text="Get Started" size="lg" />
+              <Link href="/recruiter/login"><Button className="group h-auto italic font-serif text-md rounded-full py-2.5 px-5 flex items-center gap-2">
+                Recruiter ?
+                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </Button></Link>
             </div>
           </div>
         }
@@ -98,8 +104,8 @@ const Hero = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.15 }}
-                className="rounded-2xl border border-border bg-card/50 backdrop-blur-md p-6 transition-all hover:shadow-[0_0_60px_-12px_rgba(168,85,247,0.4)]"                
-                >
+                className="rounded-2xl border border-border bg-card/50 backdrop-blur-md p-6 transition-all hover:shadow-[0_0_60px_-12px_rgba(168,85,247,0.4)]"
+              >
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-secondary border border-border mb-6">
                   <features.icon className="w-7 h-7 text-orange-400" />
                 </div>
