@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Eye, EyeOff, Swords, Shield, Trophy, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/context'/authContext";
+import { useAuth } from "@/app/context/authContext";
 
 interface FormData {
     name: string,

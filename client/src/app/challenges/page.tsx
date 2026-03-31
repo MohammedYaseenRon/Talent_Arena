@@ -23,7 +23,7 @@ import Link from "next/link";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
-import { useAuth } from "../context'/authContext";
+import { useAuth } from "../context/authContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ModeToggle } from "@/components/Darkmode";
 
 type Difficulty = "EASY" | "MEDIUM" | "HARD" | "All";
 type ChallengeType = "FRONTEND" | "BACKEND" | "DSA" | "SYSTEM_DESIGN" | "All";
@@ -139,16 +140,15 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
   return (
     <div
       onClick={handleNavigate}
-      className={`group relative bg-slate-950 border transition-all duration-200 cursor-pointer overflow-hidden
+      className={`group relative rounded-sm border transition-all duration-200 cursor-pointer overflow-hidden
         ${
           challenge.status === "LIVE"
-            ? "border-emerald-900/60 hover:border-emerald-700"
+            ? "dark:border-emerald-900/60 hover:border-emerald-700"
             : challenge.status === "SCHEDULED"
-              ? "border-slate-800 hover:border-blue-800"
-              : "border-slate-900 hover:border-slate-700 opacity-70 hover:opacity-100"
+              ? "border-slate-500 dark:border-slate-800 hover:border-blue-800"
+              : "border-slate-500 dark:border-slate-900 hover:border-slate-500 opacity-70 hover:opacity-100"
         }`}
     >
-      {/* Live top glow bar */}
       {challenge.status === "LIVE" && (
         <div className="h-px w-full bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
       )}
@@ -158,9 +158,7 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
 
       <div className="p-5">
         <div className="flex items-start justify-between gap-4">
-          {/* Left — main content */}
           <div className="flex-1 min-w-0">
-            {/* Status + type row */}
             <div className="flex items-center gap-2 mb-3 flex-wrap">
               {challenge.status === "LIVE" && (
                 <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold px-2 py-0.5 bg-emerald-950 border border-emerald-800 text-emerald-400">
@@ -175,7 +173,7 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
                 </span>
               )}
               {challenge.status === "ENDED" && (
-                <span className="inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 bg-slate-900 border border-slate-800 text-slate-500">
+                <span className="inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 dark:bg-slate-900 border border-slate-800 text-slate-500">
                   ENDED
                 </span>
               )}
@@ -279,11 +277,6 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
                 View Details <ChevronRight className="w-3 h-3" />
               </button>
             )}
-            {challenge.status === "ENDED" && (
-              <button className="inline-flex items-center gap-1 text-xs font-mono px-3 py-1.5 border border-slate-800 text-slate-600 group-hover:border-slate-600 group-hover:text-slate-400 transition-colors">
-                Results <ChevronRight className="w-3 h-3" />
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -305,10 +298,10 @@ function SectionHeader({
   return (
     <div className="flex items-center gap-3 mb-4">
       <span className={color}>{icon}</span>
-      <span className="text-sm font-mono font-bold text-slate-300 uppercase tracking-widest">
+      <span className="text-sm font-mono font-bold text-slate-500 uppercase tracking-widest">
         {label}
       </span>
-      <span className="text-xs font-mono text-slate-600 px-2 py-0.5 bg-slate-900 border border-slate-800">
+      <span className="text-xs font-mono rounded-lg text-slate-600 px-2 py-0.5 dark:bg-slate-900 border border-slate-800">
         {count}
       </span>
     </div>
@@ -404,7 +397,7 @@ const ChallengesPage = () => {
 
   const handleLogout = async () => {
     await logout();
-    router.push("/"); 
+    router.push("/");
   };
 
   if (loading) {
@@ -421,54 +414,61 @@ const ChallengesPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="w-full border h-16 flex items-center justify-between px-12">
+    <div className="min-h-screen dark:bg-slate-950 text-slate-100">
+      <div className="w-full h-16 flex items-center justify-between px-12">
         <h2 className="font-mono font-bold text-black dark:text-white text-lg lg:text-xl">
           Talent_Arena
         </h2>
-        <div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="w-full flex items-center gap-3 px-3 py-2 h-auto justify-start"
+        <div className="flex items-center gap-4">
+          <div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="w-full border border-slate-200 dark:border-gray-700 flex items-center gap-3 px-3 py-1.5 h-auto justify-start hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
+                >
+                  <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-black flex items-center justify-center shrink-0">
+                    <Avatar>
+                      <AvatarFallback className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium">
+                        {user?.name?.charAt(0).toLocaleUpperCase() ?? "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <div className="flex flex-col items-start text-left overflow-hidden">
+                    <span className="text-sm text-slate-800 dark:text-white font-medium truncate w-full">
+                      {user?.name ?? "User"}
+                    </span>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-52 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
+                align="end"
+                side="bottom"
               >
-                <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
-                  <Avatar>
-                    <AvatarFallback>
-                      {user?.name?.charAt(0).toLocaleUpperCase() ?? "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-                <div className="flex flex-col items-start text-left overflow-hidden">
-                  <span className="text-sm font-medium truncate w-full">
-                    {user?.name ?? "User"}
-                  </span>
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-52" align="end" side="top">
-              <DropdownMenuItem
-                onClick={handleLogout}
-                className="text-red-500 focus:text-red-500 focus:bg-red-500/10 cursor-pointer"
-              >
-                <span>Log out</span>
-                <DropdownMenuShortcut>
-                  <LogOut />
-                </DropdownMenuShortcut>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-red-500 focus:text-red-500 focus:bg-red-500/10 cursor-pointer"
+                >
+                  <span>Log out</span>
+                  <DropdownMenuShortcut>
+                    <LogOut />
+                  </DropdownMenuShortcut>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <ModeToggle />
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="mb-10">
           <p className="text-xs font-mono text-slate-600 tracking-widest uppercase mb-2">
             Candidate Dashboard
           </p>
-          <h1 className="text-3xl font-bold text-slate-100 tracking-tight mb-1">
+          <h1 className="text-3xl font-bold text-black dark:text-white tracking-tight mb-1">
             Challenges
           </h1>
           <p className="text-sm font-mono text-slate-600">
@@ -493,7 +493,7 @@ const ChallengesPage = () => {
             value={selectedStatus}
             onValueChange={(v) => setSelectedStatus(v as Status)}
           >
-            <SelectTrigger className="w-36 bg-slate-900 border-slate-800 text-slate-300 text-xs font-mono">
+            <SelectTrigger className="w-36 dark:bg-slate-900 border-slate-800 text-slate-500 text-xs font-mono">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -533,7 +533,7 @@ const ChallengesPage = () => {
             value={selectedDifficulty}
             onValueChange={(v) => setSelectedDifficulty(v as Difficulty)}
           >
-            <SelectTrigger className="w-36 bg-slate-900 border-slate-800 text-slate-300 text-xs font-mono">
+            <SelectTrigger className="w-36 dark:bg-slate-900 border-slate-800 text-slate-500 text-xs font-mono">
               <SelectValue placeholder="Difficulty" />
             </SelectTrigger>
             <SelectContent>
@@ -550,7 +550,7 @@ const ChallengesPage = () => {
             value={selectedType}
             onValueChange={(v) => setSelectedType(v as ChallengeType)}
           >
-            <SelectTrigger className="w-40 bg-slate-900 border-slate-800 text-slate-300 text-xs font-mono">
+            <SelectTrigger className="w-40 dark:bg-slate-900 border-slate-800 text-slate-500 text-xs font-mono">
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>

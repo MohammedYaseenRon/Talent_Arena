@@ -42,7 +42,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import clsx from "clsx";
-import { useAuth } from "@/app/context'/authContext";
+import { useAuth } from "@/app/context/authContext";
 import { useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 

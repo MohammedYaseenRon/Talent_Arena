@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Eye, EyeOff, Swords, Shield, Trophy, Zap, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/context'/authContext";
+import { useAuth } from "@/app/context/authContext";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
