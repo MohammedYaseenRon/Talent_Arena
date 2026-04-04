@@ -9,8 +9,8 @@ import {
   boolean,
   uniqueIndex,
   jsonb,
+  index
 } from "drizzle-orm/pg-core";
-import { number } from "zod";
 export const userRoleEnum = pgEnum("user_role", ["USER", "RECRUITER", "ADMIN"]);
 export const challengeDifficultyEnum = pgEnum("challenge_difficulty", [
   "EASY",
@@ -78,7 +78,10 @@ export const challenges = pgTable("challenges", {
   isDraft: boolean("is_draft").default(true).notNull(), 
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  createdByIdx: index("idx_challenges_created_by").on(table.createdBy),
+
+}));
 
 export const problems = pgTable("problems", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -143,7 +146,10 @@ export const challengeSessions = pgTable("challenge_sessions", {
   status: sessionStatusEnum("status").default("SCHEDULED").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(), // ADD THIS LINE
-});
+}, (table) => ({
+  statusIdx:      index("idx_sessions_status").on(table.status),
+  challengeIdIdx: index("idx_sessions_challenge_id").on(table.challengeId),
+}));
 
 export const sessionParticipants = pgTable(
   "session_participants",
@@ -199,7 +205,13 @@ export const submissions = pgTable("submissions", {
   featuresCompleted: jsonb("features_completed").$type<string[]>(),
   featuresMissing: jsonb("features_missing").$type<string[]>(),
   evaluatedAt: timestamp("evaluated_at"),
-});
+}, (table) => ({
+  aiScoreIdx:      index("idx_submissions_ai_score").on(table.aiScore),
+  submittedAtIdx:  index("idx_submissions_submitted_at").on(table.submittedAt),
+  userIdIdx:       index("idx_submissions_user_id").on(table.userId),
+  sessionIdIdx:    index("idx_submissions_session_id").on(table.sessionId),
+  challengeIdIdx:  index("idx_submissions_challenge_id").on(table.challengeId),
+}));
 
 export const refreshTokens = pgTable("refresh_tokens", {
   id: uuid("id").defaultRandom().primaryKey(),

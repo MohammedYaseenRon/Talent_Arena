@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import { error } from "node:console";
 import { challenges, challengeSessions, sessionParticipants, submissions, users } from "../db/schema.js";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { evaluateSubmission } from "../services/evaluateSubmission.js";
 import { getIO } from "../lib/socket.js";
+import { promise } from "zod";
 
 export const submitChallenge = async (req: Request, res: Response) => {
   try {
@@ -224,6 +225,155 @@ export const getCandidateSubmission = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Get candidate submission error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getRecruiterDashboardData = async (req: Request, res: Response) => {
+  try {
+    const recruiterId = req.user?.userId;
+    if (!recruiterId) return res.status(401).json({ error: "Unauthorized" });
+
+    const [
+      challengeCounts,
+      sessionCounts,
+      scoreStats,
+      topPerformers,
+      recentSubmissions,
+      upcomingSessions,
+      totalParticipants,
+    ] = await Promise.all([
+
+      db
+        .select({ isDraft: challenges.isDraft, count: sql<number>`count(*)::int` })
+        .from(challenges)
+        .where(eq(challenges.createdBy, recruiterId))
+        .groupBy(challenges.isDraft),
+
+      db
+        .select({ status: challengeSessions.status, count: sql<number>`count(*)::int` })
+        .from(challengeSessions)
+        .innerJoin(challenges, eq(challengeSessions.challengeId, challenges.id))
+        .where(eq(challenges.createdBy, recruiterId))
+        .groupBy(challengeSessions.status),
+
+      db
+        .select({
+          avgScore:      sql<number>`round(avg(${submissions.aiScore}))::int`,
+          totalEvaluated: sql<number>`count(*)::int`,
+          high:          sql<number>`count(*) filter (where ${submissions.aiScore} >= 80)::int`,
+          mid:           sql<number>`count(*) filter (where ${submissions.aiScore} >= 60 and ${submissions.aiScore} < 80)::int`,
+          low:           sql<number>`count(*) filter (where ${submissions.aiScore} < 60)::int`,
+        })
+        .from(submissions)
+        .innerJoin(challengeSessions, eq(submissions.sessionId, challengeSessions.id))
+        .innerJoin(challenges, eq(challengeSessions.challengeId, challenges.id))
+        .where(
+          and(
+            eq(challenges.createdBy, recruiterId),
+            isNotNull(submissions.aiScore)
+          )
+        ),
+
+      db
+        .select({
+          userId:         users.id,
+          name:           users.name,
+          aiScore:        submissions.aiScore,
+          challengeId:    challenges.id,
+          challengeTitle: challenges.title,
+          sessionId:      challengeSessions.id,
+          autoSubmitted:  submissions.autoSubmitted,
+        })
+        .from(submissions)
+        .innerJoin(users,             eq(submissions.userId,            users.id))
+        .innerJoin(challengeSessions, eq(submissions.sessionId,         challengeSessions.id))
+        .innerJoin(challenges,        eq(challengeSessions.challengeId, challenges.id))
+        .where(
+          and(
+            eq(challenges.createdBy, recruiterId),
+            isNotNull(submissions.aiScore)
+          )
+        )
+        .orderBy(desc(submissions.aiScore))
+        .limit(5),
+
+      db
+        .select({
+          userId:         users.id,
+          name:           users.name,
+          aiScore:        submissions.aiScore,
+          challengeId:    challenges.id,
+          challengeTitle: challenges.title,
+          sessionId:      challengeSessions.id,
+          submittedAt:    submissions.submittedAt,
+        })
+        .from(submissions)
+        .innerJoin(users,             eq(submissions.userId,            users.id))
+        .innerJoin(challengeSessions, eq(submissions.sessionId,         challengeSessions.id))
+        .innerJoin(challenges,        eq(challengeSessions.challengeId, challenges.id))
+        .where(eq(challenges.createdBy, recruiterId))
+        .orderBy(desc(submissions.submittedAt))
+        .limit(5),
+
+      db
+        .select({
+          challengeId:      challenges.id,
+          sessionId:        challengeSessions.id,
+          title:            challenges.title,
+          difficulty:       challenges.difficulty,
+          startTime:        challengeSessions.startTime,
+          participantCount: sql<number>`count(${sessionParticipants.id})::int`,
+        })
+        .from(challengeSessions)
+        .innerJoin(challenges,         eq(challengeSessions.challengeId,   challenges.id))
+        .leftJoin(sessionParticipants, eq(sessionParticipants.sessionId,   challengeSessions.id))
+        .where(
+          and(
+            eq(challenges.createdBy, recruiterId),
+            eq(challengeSessions.status, "SCHEDULED")
+          )
+        )
+        .groupBy(challenges.id, challengeSessions.id)
+        .orderBy(challengeSessions.startTime)
+        .limit(4),
+
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(sessionParticipants)
+        .innerJoin(challengeSessions, eq(sessionParticipants.sessionId,    challengeSessions.id))
+        .innerJoin(challenges,        eq(challengeSessions.challengeId,    challenges.id))
+        .where(eq(challenges.createdBy, recruiterId)),
+    ]);
+
+    const counts = { DRAFT: 0, PUBLISHED: 0, SCHEDULED: 0, LIVE: 0, ENDED: 0 };
+    for (const r of challengeCounts) {
+      if (r.isDraft) counts.DRAFT += r.count;
+      else           counts.PUBLISHED += r.count;
+    }
+    for (const r of sessionCounts) {
+      counts[r.status] = r.count;
+    }
+
+    const stats = scoreStats[0];
+
+    return res.status(200).json({
+      counts,
+      totalChallenges:   Object.values(counts).reduce((a, b) => a + b, 0),
+      totalParticipants: totalParticipants[0]?.count ?? 0,
+      totalSubmitted:    recentSubmissions.length, // frontend only uses this for display
+      totalEvaluated:    stats?.totalEvaluated ?? 0,
+      avgScore:          stats?.avgScore ?? null,
+      scoreHigh:         stats?.high ?? 0,
+      scoreMid:          stats?.mid  ?? 0,
+      scoreLow:          stats?.low  ?? 0,
+      topPerformers,
+      recentSubs:        recentSubmissions,  
+      upcoming:          upcomingSessions,   
+      live:              counts.LIVE > 0 ? [{ count: counts.LIVE }] : [], 
+    });
+  } catch (error) {
+    console.error("Dashboard error:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 };
