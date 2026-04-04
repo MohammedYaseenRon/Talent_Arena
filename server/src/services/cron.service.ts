@@ -2,6 +2,7 @@ import cron from "node-cron";
 import { db } from "../db/index.js";
 import { challengeSessions } from "../db/schema.js";
 import { eq, and, lte } from "drizzle-orm";
+import { getIO } from "../lib/socket.js";
 
 
 export const updateChallengeStatuses = async () => {
@@ -30,6 +31,22 @@ export const updateChallengeStatuses = async () => {
         )
       )
       .returning();
+
+    for(const session of goingLive) {
+      getIO().to(`session: ${session.id}`).emit("session: status", {
+        status: "LIVE",
+        sessionId: session.id,
+      });
+      console.log(`[CRON] Session ${session.id} -> LIVE`);
+    }
+
+    for (const session of ending) {
+      getIO().to(`session:${session.id}`).emit("session:status", {
+        status: "ENDED",
+        sessionId: session.id,
+      });
+      console.log(`[CRON] Session ${session.id} → ENDED`);
+    }
 
     console.log(`[CRON] Updated: ${goingLive.length} to LIVE, ${ending.length} to ENDED`);
   } catch (error) {

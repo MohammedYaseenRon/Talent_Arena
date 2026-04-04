@@ -1,5 +1,6 @@
 "use client";
 
+import { useSubmitChallenge } from "@/hooks/useSubmitChallenge";
 import api from "@/lib/axios";
 import { useSandpack } from "@codesandbox/sandpack-react";
 import { CheckCircle, Loader2, Send } from "lucide-react";
@@ -15,47 +16,22 @@ function SubmitBtn({
 }) {
   const { sandpack } = useSandpack();
   const { files } = sandpack;
-  const [status, setStatus] = useState<
-    "idle" | "loading" | "success" | "error"
-  >("idle");
   const [showConfirm, setShowConfirm] = useState(false);
   const API = process.env.NEXT_PUBLIC_API_URL;
   const router = useRouter();
 
+  const { status, submit } = useSubmitChallenge(challengeId, sessionId);
+
   const handleSubmit = async () => {
     setShowConfirm(false);
-    setStatus("loading");
-
-    try {
-      const codeFiles = Object.entries(sandpack.files).reduce(
-        (acc, [path, file]: any) => {
-          acc[path] = file.code;
-          return acc;
-        },
-        {} as Record<string, string>,
-      );
-
-      await api.post(
-        `${API}/submission/${challengeId}/sessions/${sessionId}/submit`,
-        {
-          code: JSON.stringify(codeFiles),
-          language: "react",
-          autosubmitted: false,
-  
-        },
-      );
-      setStatus("success");
-      setTimeout(() => {
-        router.push("/challenges");
-      });
-    } catch (error: any) {
-      if (error?.response?.status === 409) {
-        setStatus("success"); 
-        return;
-      }
-      setStatus("error");
-      setTimeout(() => setStatus("idle"), 3000);
-    }
+    const codeFiles = Object.entries(sandpack.files).reduce(
+      (acc, [path, file]: any) => {
+        acc[path] = file.code;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+    await submit(codeFiles, false);
   };
 
   return (

@@ -9,8 +9,9 @@ import {
   submissions,
   users,
 } from "../db/schema.js";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNotNull, sql } from "drizzle-orm";
 import { error } from "console";
+import { getIO } from "../lib/socket.js";
 
 export const createChallenge = async (req: Request, res: Response) => {
   try {
@@ -23,7 +24,9 @@ export const createChallenge = async (req: Request, res: Response) => {
     }
 
     if (req.user?.role !== "RECRUITER") {
-      return res.status(403).json({ error: "Only recruiters can create challenges" });
+      return res
+        .status(403)
+        .json({ error: "Only recruiters can create challenges" });
     }
 
     if (challengeType === "FRONTEND" && !frontendDetails) {
@@ -45,7 +48,7 @@ export const createChallenge = async (req: Request, res: Response) => {
       .select()
       .from(challenges)
       .where(
-        and(eq(challenges.title, title), eq(challenges.createdBy, createdBy))
+        and(eq(challenges.title, title), eq(challenges.createdBy, createdBy)),
       );
 
     if (existingChallenge) {
@@ -130,11 +133,15 @@ export const scheduleChallengeSession = async (req: Request, res: Response) => {
     }
 
     if (start >= end) {
-      return res.status(400).json({ error: "End time must be after start time" });
+      return res
+        .status(400)
+        .json({ error: "End time must be after start time" });
     }
 
     if (start <= new Date()) {
-      return res.status(400).json({ error: "Start time must be in the future" });
+      return res
+        .status(400)
+        .json({ error: "Start time must be in the future" });
     }
 
     const [challenge] = await db
@@ -214,32 +221,33 @@ export const getAllChallenges = async (req: Request, res: Response) => {
             status: activeSession?.status ?? null,
           }),
         };
-      })
+      }),
     );
 
     // 3. Compute counts from full list — always accurate
     const counts = {
-      ALL:       enriched.length,
-      DRAFT:     enriched.filter((c) => c.uiStatus === "DRAFT").length,
+      ALL: enriched.length,
+      DRAFT: enriched.filter((c) => c.uiStatus === "DRAFT").length,
       PUBLISHED: enriched.filter((c) => c.uiStatus === "PUBLISHED").length,
       SCHEDULED: enriched.filter((c) => c.uiStatus === "SCHEDULED").length,
-      LIVE:      enriched.filter((c) => c.uiStatus === "LIVE").length,
-      ENDED:     enriched.filter((c) => c.uiStatus === "ENDED").length,
+      LIVE: enriched.filter((c) => c.uiStatus === "LIVE").length,
+      ENDED: enriched.filter((c) => c.uiStatus === "ENDED").length,
     };
 
-    const filtered = status && validStatuses.includes(status as string)
-      ? enriched.filter((c) => c.uiStatus === status)
-      : enriched;
+    const filtered =
+      status && validStatuses.includes(status as string)
+        ? enriched.filter((c) => c.uiStatus === status)
+        : enriched;
 
     const paginated = filtered.slice(offset, offset + limitNum);
 
     return res.status(200).json({
       challenges: paginated,
-      counts,                          // always full counts
+      counts, // always full counts
       pagination: {
         page: pageNum,
         limit: limitNum,
-        total: filtered.length,        // total in current filter
+        total: filtered.length, // total in current filter
         totalPages: Math.ceil(filtered.length / limitNum),
         hasNext: offset + limitNum < filtered.length,
         hasPrev: pageNum > 1,
@@ -279,7 +287,7 @@ export const getChallengeById = async (req: Request, res: Response) => {
       .from(challenges)
       .leftJoin(
         frontendChallenges,
-        eq(frontendChallenges.challengeId, challenges.id)
+        eq(frontendChallenges.challengeId, challenges.id),
       )
       .where(eq(challenges.id, challengeId))
       .limit(1);
@@ -289,27 +297,28 @@ export const getChallengeById = async (req: Request, res: Response) => {
     }
 
     return res.status(200).json({
-      challenge: result.challenge,              
-      frontendDetails: result.frontend,         
+      challenge: result.challenge,
+      frontendDetails: result.frontend,
     });
-
   } catch (error) {
     console.error("Get challenge error:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 };
 
-export const getChallenegeInstruction = async(req: Request, res: Response) => {
-  try{
-    const challengeId = Array.isArray(req.params.challengeId) ? req.params.challengeId[0] : req.params.challengeId;
+export const getChallenegeInstruction = async (req: Request, res: Response) => {
+  try {
+    const challengeId = Array.isArray(req.params.challengeId)
+      ? req.params.challengeId[0]
+      : req.params.challengeId;
 
     const sessionId = req.query.session as string;
-    if(!challengeId || !sessionId) {
-      return res.status(400).json({error : 'challengeId is required'});
+    if (!challengeId || !sessionId) {
+      return res.status(400).json({ error: "challengeId is required" });
     }
 
     const [result] = await db
-    .select({
+      .select({
         challengeId: challenges.id,
         title: challenges.title,
         description: challenges.description,
@@ -320,28 +329,30 @@ export const getChallenegeInstruction = async(req: Request, res: Response) => {
         companyName: recruiterProfiles.companyName,
         designation: recruiterProfiles.designation,
         companyWebsite: recruiterProfiles.companyWebsite,
-    })
-    .from(challenges)
-    .innerJoin(users, eq(challenges.createdBy, users.id))
-    .leftJoin(recruiterProfiles, eq(recruiterProfiles.userId, users.id))
-    .where(eq(challenges.id, challengeId))
-    .limit(1);
+      })
+      .from(challenges)
+      .innerJoin(users, eq(challenges.createdBy, users.id))
+      .leftJoin(recruiterProfiles, eq(recruiterProfiles.userId, users.id))
+      .where(eq(challenges.id, challengeId))
+      .limit(1);
 
-    if(!result){
+    if (!result) {
       return res.status(404).json({ error: "Challenge not found" });
     }
 
     const [session] = await db
-    .select()
-    .from(challengeSessions)
-    .where(eq(challengeSessions.id, sessionId))
-    .limit(1);
+      .select()
+      .from(challengeSessions)
+      .where(eq(challengeSessions.id, sessionId))
+      .limit(1);
 
-    if(!session) {
+    if (!session) {
       return res.status(404).json({ error: "Session not found" });
     }
 
-    const durationMs =  new Date(session.endTime).getTime() - new Date(session.startTime).getTime();
+    const durationMs =
+      new Date(session.endTime).getTime() -
+      new Date(session.startTime).getTime();
     const durationMins = Math.floor(durationMs / 60000);
     return res.status(200).json({
       challenge: {
@@ -355,18 +366,18 @@ export const getChallenegeInstruction = async(req: Request, res: Response) => {
         },
       },
     });
-  }catch(error) {
+  } catch (error) {
     return res.status(500).json({ error: "Internal server error" });
   }
-}
+};
 export const getSessionsByChallenge = async (req: Request, res: Response) => {
   try {
     const challengeId = Array.isArray(req.params.challengeId)
       ? req.params.challengeId[0]
       : req.params.challengeId;
 
-    if(!challengeId) {
-      return res.status(400).json({error: "ChallengeId is required"})
+    if (!challengeId) {
+      return res.status(400).json({ error: "ChallengeId is required" });
     }
 
     const sessions = await db
@@ -385,10 +396,14 @@ export const getSessionsByChallenge = async (req: Request, res: Response) => {
 export const joinChallenge = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
-    const sessionId = Array.isArray(req.params.sessionId) ? req.params.sessionId[0] : req.params.sessionId;
+    const sessionId = Array.isArray(req.params.sessionId)
+      ? req.params.sessionId[0]
+      : req.params.sessionId;
 
-    if(!sessionId || !userId) {
-      return res.status(401).json({error: "sessionId and userId is required"});
+    if (!sessionId || !userId) {
+      return res
+        .status(401)
+        .json({ error: "sessionId and userId is required" });
     }
     const [session] = await db
       .select()
@@ -410,8 +425,8 @@ export const joinChallenge = async (req: Request, res: Response) => {
       .where(
         and(
           eq(sessionParticipants.sessionId, sessionId),
-          eq(sessionParticipants.userId, userId)
-        )
+          eq(sessionParticipants.userId, userId),
+        ),
       )
       .limit(1);
 
@@ -432,8 +447,27 @@ export const joinChallenge = async (req: Request, res: Response) => {
       })
       .returning();
 
+    if (session.status === "LIVE") {
+      const result = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(sessionParticipants)
+        .where(
+          and(
+            eq(sessionParticipants.sessionId, sessionId),
+            isNotNull(sessionParticipants.startedAt),
+          ),
+        );
+      const count = result[0]?.count ?? 0;
+      getIO()
+        .to(`session:${sessionId}`)
+        .emit("session:participants", { count });
+    }
+
     return res.status(200).json({
-      message: session.status === "LIVE" ? "Joined successfully" : "Registered successfully",
+      message:
+        session.status === "LIVE"
+          ? "Joined successfully"
+          : "Registered successfully",
       participant,
       session,
     });
@@ -491,10 +525,10 @@ export const getUpcomingChallenges = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-export const getEndedChallenges = async(req: Request, res: Response) => {
+export const getEndedChallenges = async (req: Request, res: Response) => {
   try {
     const ended = await db
-     .select({
+      .select({
         sessionId: challengeSessions.id,
         challengeId: challenges.id,
         title: challenges.title,
@@ -509,18 +543,17 @@ export const getEndedChallenges = async(req: Request, res: Response) => {
       .innerJoin(challenges, eq(challengeSessions.challengeId, challenges.id))
       .where(eq(challengeSessions.status, "ENDED"))
       .orderBy(challengeSessions.endTime);
-      
-      return res.status(200).json({ challenges: ended });
 
-  }catch(error){
-    res.status(500).json({error: "Internal server error"})
+    return res.status(200).json({ challenges: ended });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
   }
-}
+};
 export const scheduleChallenge = async (req: Request, res: Response) => {
   try {
-    console.log("Received body:", req.body);  // ← Add this
+    console.log("Received body:", req.body); // ← Add this
     const { challengeId, startTime, endTime, notifyCandidates } = req.body;
-    console.log("Parsed values:", { challengeId, startTime, endTime });  // ← Add this
+    console.log("Parsed values:", { challengeId, startTime, endTime }); // ← Add this
     if (!challengeId || !startTime || !endTime) {
       return res
         .status(400)
@@ -612,33 +645,43 @@ export const publishChallenge = async (req: Request, res: Response) => {
 
 export const updateChallenge = async (req: Request, res: Response) => {
   try {
-      const { challengeId } = req.params as {
-        challengeId: string;
-      };    
-      const recruiterId = req.user?.userId;
-      if(!recruiterId) {
-        return res.status(401).json({error: "Unautorized"});
-      }
+    const { challengeId } = req.params as {
+      challengeId: string;
+    };
+    const recruiterId = req.user?.userId;
+    if (!recruiterId) {
+      return res.status(401).json({ error: "Unautorized" });
+    }
 
-      if (req.user?.role !== "RECRUITER") {
-        return res.status(403).json({ error: "Only recruiters can edit challenges" });
-      }
+    if (req.user?.role !== "RECRUITER") {
+      return res
+        .status(403)
+        .json({ error: "Only recruiters can edit challenges" });
+    }
 
     // Verify ownership + must be draft
     const [existing] = await db
       .select()
       .from(challenges)
-      .where(and(eq(challenges.id, challengeId), eq(challenges.createdBy, recruiterId)));
+      .where(
+        and(
+          eq(challenges.id, challengeId),
+          eq(challenges.createdBy, recruiterId),
+        ),
+      );
 
     if (!existing) {
       return res.status(404).json({ error: "Challenge not found" });
     }
 
     if (!existing.isDraft) {
-      return res.status(400).json({ error: "Only draft challenges can be edited" });
+      return res
+        .status(400)
+        .json({ error: "Only draft challenges can be edited" });
     }
 
-    const { title, description, difficulty, challengeType, frontendDetails } = req.body;
+    const { title, description, difficulty, challengeType, frontendDetails } =
+      req.body;
 
     await db
       .update(challenges)
@@ -651,7 +694,9 @@ export const updateChallenge = async (req: Request, res: Response) => {
       .where(eq(challenges.id, challengeId));
 
     if (existing.challengeType === "FRONTEND" && frontendDetails) {
-      const existingImages = req.body.existingImages ? JSON.parse(req.body.existingImages) : [];
+      const existingImages = req.body.existingImages
+        ? JSON.parse(req.body.existingImages)
+        : [];
       const files = req.files as Express.Multer.File[];
       const newImages = files?.map((f: any) => f.path) ?? [];
       const finalImages = [...existingImages, ...newImages];
@@ -659,14 +704,30 @@ export const updateChallenge = async (req: Request, res: Response) => {
       await db
         .update(frontendChallenges)
         .set({
-          ...(frontendDetails.taskDescription && { taskDescription: frontendDetails.taskDescription }),
-          ...(frontendDetails.features !== undefined && { features: frontendDetails.features || null }),
-          ...(frontendDetails.optionalRequirements !== undefined && { optionalRequirements: frontendDetails.optionalRequirements || null }),
-          ...(frontendDetails.apiDetails !== undefined && { apiDetails: frontendDetails.apiDetails || null }),
-          ...(frontendDetails.submissionInstructions && { submissionInstructions: frontendDetails.submissionInstructions }),
-          ...(frontendDetails.techConstraints !== undefined && { techConstraints: frontendDetails.techConstraints || null }),
-          ...(frontendDetails.starterCode !== undefined && { starterCode: frontendDetails.starterCode || null }),
-          ...(frontendDetails.allowedLanguages !== undefined && { allowedLanguages: frontendDetails.allowedLanguages || null }),
+          ...(frontendDetails.taskDescription && {
+            taskDescription: frontendDetails.taskDescription,
+          }),
+          ...(frontendDetails.features !== undefined && {
+            features: frontendDetails.features || null,
+          }),
+          ...(frontendDetails.optionalRequirements !== undefined && {
+            optionalRequirements: frontendDetails.optionalRequirements || null,
+          }),
+          ...(frontendDetails.apiDetails !== undefined && {
+            apiDetails: frontendDetails.apiDetails || null,
+          }),
+          ...(frontendDetails.submissionInstructions && {
+            submissionInstructions: frontendDetails.submissionInstructions,
+          }),
+          ...(frontendDetails.techConstraints !== undefined && {
+            techConstraints: frontendDetails.techConstraints || null,
+          }),
+          ...(frontendDetails.starterCode !== undefined && {
+            starterCode: frontendDetails.starterCode || null,
+          }),
+          ...(frontendDetails.allowedLanguages !== undefined && {
+            allowedLanguages: frontendDetails.allowedLanguages || null,
+          }),
           ...(finalImages.length > 0 && { designImages: finalImages }),
         })
         .where(eq(frontendChallenges.challengeId, challengeId));
@@ -680,8 +741,8 @@ export const updateChallenge = async (req: Request, res: Response) => {
 };
 export const saveDraft = async (req: Request, res: Response) => {
   try {
-    const challengeId = Array.isArray(req.params.challengeId) 
-      ? req.params.challengeId[0] 
+    const challengeId = Array.isArray(req.params.challengeId)
+      ? req.params.challengeId[0]
       : req.params.challengeId;
     if (!challengeId) {
       return res.status(400).json({ error: "Challenge ID required" });
@@ -715,34 +776,37 @@ export const saveDraft = async (req: Request, res: Response) => {
   }
 };
 
-export const checkParticipant = async (req:Request, res: Response) => {
-    const userId = req.user?.userId;
-    const sessionId = Array.isArray(req.params.sessionId) ? req.params.sessionId[0] : req.params.sessionId;
+export const checkParticipant = async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const sessionId = Array.isArray(req.params.sessionId)
+    ? req.params.sessionId[0]
+    : req.params.sessionId;
 
-    if(!sessionId || !userId) {
-      return res.status(401).json({error: "sessionId and userId is required"});
-    }
+  if (!sessionId || !userId) {
+    return res.status(401).json({ error: "sessionId and userId is required" });
+  }
 
   const [participant] = await db
     .select()
     .from(sessionParticipants)
-    .where(and(
-      eq(sessionParticipants.sessionId, sessionId),
-      eq(sessionParticipants.userId, userId)
-    ))
+    .where(
+      and(
+        eq(sessionParticipants.sessionId, sessionId),
+        eq(sessionParticipants.userId, userId),
+      ),
+    )
     .limit(1);
 
-    const [submission] = await db
+  const [submission] = await db
     .select()
     .from(submissions)
     .where(
-      and(
-        eq(submissions.sessionId, sessionId),
-        eq(submissions.userId, userId)
-      )
+      and(eq(submissions.sessionId, sessionId), eq(submissions.userId, userId)),
     )
-    .limit(1)
-  return res.status(200).json({ isRegistered: !!participant, hasSubmitted: !!submission});
+    .limit(1);
+  return res
+    .status(200)
+    .json({ isRegistered: !!participant, hasSubmitted: !!submission });
 };
 
 export const getSessionSubmission = async (req: Request, res: Response) => {
@@ -761,8 +825,8 @@ export const getSessionSubmission = async (req: Request, res: Response) => {
       .where(
         and(
           eq(challenges.id, challengeId),
-          eq(challenges.createdBy, recruiterId)
-        )
+          eq(challenges.createdBy, recruiterId),
+        ),
       )
       .limit(1);
 
@@ -778,7 +842,9 @@ export const getSessionSubmission = async (req: Request, res: Response) => {
       .limit(1);
 
     if (!session) {
-      return res.status(404).json({ error: "No session found for this challenge" });
+      return res
+        .status(404)
+        .json({ error: "No session found for this challenge" });
     }
 
     const sessionId = session.id;
@@ -809,8 +875,8 @@ export const getSessionSubmission = async (req: Request, res: Response) => {
         submissions,
         and(
           eq(submissions.sessionId, sessionId),
-          eq(submissions.userId, sessionParticipants.userId)
-        )
+          eq(submissions.userId, sessionParticipants.userId),
+        ),
       )
       .where(eq(sessionParticipants.sessionId, sessionId))
       .orderBy(submissions.aiScore);
@@ -822,8 +888,8 @@ export const getSessionSubmission = async (req: Request, res: Response) => {
           ? "EVALUATED"
           : "PENDING"
         : p.startedAt
-        ? "IN_PROGRESS"
-        : "REGISTERED",
+          ? "IN_PROGRESS"
+          : "REGISTERED",
     }));
 
     return res.status(200).json({
@@ -838,11 +904,11 @@ export const getSessionSubmission = async (req: Request, res: Response) => {
   }
 };
 
-export const getAttemptData = async(req: Request, res: Response) => {
+export const getAttemptData = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
-    const challengeId = Array.isArray(req.params.challengeId) 
-      ? req.params.challengeId[0] 
+    const challengeId = Array.isArray(req.params.challengeId)
+      ? req.params.challengeId[0]
       : req.params.challengeId;
     const sessionId = req.query.session as string;
 
@@ -850,37 +916,37 @@ export const getAttemptData = async(req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-
-    if(!challengeId || !sessionId){
-      return res.status(400).json({error: "challengeId and sessionId required"});
+    if (!challengeId || !sessionId) {
+      return res
+        .status(400)
+        .json({ error: "challengeId and sessionId required" });
     }
 
     const [participant] = await db
-    .select()
-    .from(sessionParticipants)
-    .where(
-      and(
-        eq(sessionParticipants.sessionId, sessionId),
-        eq(sessionParticipants.userId, userId)
+      .select()
+      .from(sessionParticipants)
+      .where(
+        and(
+          eq(sessionParticipants.sessionId, sessionId),
+          eq(sessionParticipants.userId, userId),
+        ),
       )
-    )
-    .limit(1);
+      .limit(1);
 
     if (!participant) {
       return res.status(403).json({ error: "Not registered for this session" });
     }
 
     const [session] = await db
-    .select()
-    .from(challengeSessions)
-    .where(eq(challengeSessions.id, sessionId))
-    .limit(1)
+      .select()
+      .from(challengeSessions)
+      .where(eq(challengeSessions.id, sessionId))
+      .limit(1);
 
-
-    if(!session){
+    if (!session) {
       return res.status(404).json({ error: "Session not found" });
     }
-      if (session.status === "ENDED") {
+    if (session.status === "ENDED") {
       return res.status(403).json({ error: "Session has ended" });
     }
 
@@ -898,7 +964,7 @@ export const getAttemptData = async(req: Request, res: Response) => {
       return res.status(404).json({ error: "Challenge not found" });
     }
 
-     if (challenge.isDraft) {
+    if (challenge.isDraft) {
       return res.status(403).json({ error: "Challenge not available" });
     }
     const [frontendContent] = await db
@@ -918,8 +984,8 @@ export const getAttemptData = async(req: Request, res: Response) => {
         .where(
           and(
             eq(sessionParticipants.sessionId, sessionId),
-            eq(sessionParticipants.userId, userId)
-          )
+            eq(sessionParticipants.userId, userId),
+          ),
         );
     }
 
@@ -949,15 +1015,18 @@ export const getAttemptData = async(req: Request, res: Response) => {
         status: session.status,
       },
     });
-  }catch(error) {
+  } catch (error) {
     console.error("Get attempt data error:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
-}
+};
 
 // Add this to challenge.controller.ts
 
-export const getAllChallengeSubmissions = async (req: Request, res: Response) => {
+export const getAllChallengeSubmissions = async (
+  req: Request,
+  res: Response,
+) => {
   try {
     const recruiterId = req.user?.userId;
     if (!recruiterId) return res.status(401).json({ error: "Unauthorized" });
@@ -975,7 +1044,10 @@ export const getAllChallengeSubmissions = async (req: Request, res: Response) =>
         endTime: challengeSessions.endTime,
       })
       .from(challenges)
-      .innerJoin(challengeSessions, eq(challengeSessions.challengeId, challenges.id))
+      .innerJoin(
+        challengeSessions,
+        eq(challengeSessions.challengeId, challenges.id),
+      )
       .where(eq(challenges.createdBy, recruiterId))
       .orderBy(challengeSessions.startTime);
 
@@ -1011,8 +1083,8 @@ export const getAllChallengeSubmissions = async (req: Request, res: Response) =>
             submissions,
             and(
               eq(submissions.sessionId, ch.sessionId),
-              eq(submissions.userId, sessionParticipants.userId)
-            )
+              eq(submissions.userId, sessionParticipants.userId),
+            ),
           )
           .where(eq(sessionParticipants.sessionId, ch.sessionId));
 
@@ -1023,8 +1095,8 @@ export const getAllChallengeSubmissions = async (req: Request, res: Response) =>
               ? "EVALUATED"
               : "PENDING"
             : p.startedAt
-            ? "IN_PROGRESS"
-            : "REGISTERED",
+              ? "IN_PROGRESS"
+              : "REGISTERED",
         }));
 
         const evaluated = mapped.filter((p) => p.status === "EVALUATED");
@@ -1032,7 +1104,7 @@ export const getAllChallengeSubmissions = async (req: Request, res: Response) =>
           evaluated.length > 0
             ? Math.round(
                 evaluated.reduce((s, p) => s + (p.aiScore ?? 0), 0) /
-                  evaluated.length
+                  evaluated.length,
               )
             : null;
         const topScore =
@@ -1055,7 +1127,7 @@ export const getAllChallengeSubmissions = async (req: Request, res: Response) =>
           topScore,
           participants: mapped,
         };
-      })
+      }),
     );
 
     return res.status(200).json({ challenges: result });

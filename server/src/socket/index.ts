@@ -4,7 +4,7 @@ import cookie from "cookie";
 import jwt from "jsonwebtoken";
 import { db } from "../db/index.js";
 import { challengeSessions, sessionParticipants, users } from "../db/schema.js";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql, isNotNull } from "drizzle-orm";
 
 export function initializeSocket(httpServer: HTTPServer) {
   const io = new Server(httpServer, {
@@ -25,7 +25,7 @@ export function initializeSocket(httpServer: HTTPServer) {
 
       const decoded = jwt.verify(
         accessToken,
-        process.env.JWT_ACCESS_SECRET!
+        process.env.JWT_ACCESS_SECRET!,
       ) as {
         userId: string;
         role: string;
@@ -59,7 +59,9 @@ export function initializeSocket(httpServer: HTTPServer) {
           .limit(1);
 
         if (!session) {
-          socket.emit("ERROR", { message: "Challenge session not found or access denied" });
+          socket.emit("ERROR", {
+            message: "Challenge session not found or access denied",
+          });
           return;
         }
 
@@ -90,15 +92,57 @@ export function initializeSocket(httpServer: HTTPServer) {
           participants,
         });
 
-        console.log(`Recruiter ${socket.data.userId} monitoring session: ${sessionId}`);
+        console.log(
+          `Recruiter ${socket.data.userId} monitoring session: ${sessionId}`,
+        );
       } catch (error) {
         console.error("Error monitoring challenge:", error);
         socket.emit("ERROR", { message: "Failed to start monitoring" });
       }
     });
 
+    socket.on("join:session", async (sessionId: string) => {
+      await socket.join(`session: ${sessionId}`);
+      socket.data.sessionId = sessionId;
+
+      const result = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(sessionParticipants)
+        .where(
+          and(
+            eq(sessionParticipants.sessionId, sessionId),
+            isNotNull(sessionParticipants.startedAt),
+          ),
+        );
+
+      const count = result[0]?.count ?? 0;
+
+      // Broadcast to everyone in the room including recruiter monitoring
+      io.to(`session:${sessionId}`).emit("session:participants", { count });
+    });
+
     socket.on("disconnect", () => {
       console.log(`User disconnected: ${socket.data.userId}`);
+
+      const sessionId = socket.data.sessionId;
+      if (sessionId) {
+        // fire and forget — update count when candidate closes tab
+        db.select({ count: sql<number>`count(*)::int` })
+          .from(sessionParticipants)
+          .where(
+            and(
+              eq(sessionParticipants.sessionId, sessionId),
+              isNotNull(sessionParticipants.startedAt),
+            ),
+          )
+          .then((rows) => {
+            const count = rows[0]?.count ?? 0;
+            io.to(`session:${sessionId}`).emit("session:participants", {
+              count,
+            });
+          })
+          .catch(console.error);
+      }
     });
   });
 
