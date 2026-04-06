@@ -15,6 +15,7 @@ import {
   getSessionSubmission,
   getAllChallengeSubmissions,
   updateChallenge,
+  getSessionParticipantsCount,
 } from "../controllers/challenge.controller.js";
 import { createSession } from "../controllers/session.controller.js";
 import { authenticateToken } from "../middleware/auth.middleware.js";
@@ -42,6 +43,7 @@ router.get("/:challengeId/sessions", authenticateToken, getSessionsByChallenge);
 
 router.post("/sessions/:sessionId/join", authenticateToken, joinChallenge);
 router.get("/sessions/:sessionId/participant", authenticateToken, checkParticipant);
+router.get("/sessions/:sessionId/participants-count", authenticateToken, getSessionParticipantsCount);
 
 router.get("/:challengeId", authenticateToken, getChallengeById);
 

@@ -16,6 +16,8 @@ import {
   Timer,
 } from "lucide-react";
 import api from "@/lib/axios";
+import WaitingRoom from "@/components/WaitingRoom";
+import ParticipantCounter from "@/components/ParticipantCounter";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
@@ -42,11 +44,11 @@ interface InstructionData {
 const difficultyConfig = {
   EASY: {
     label: "Easy",
-    classes: "text-emerald-400 border-emerald-800 bg-emerald-950",
+    classes: "text-emerald-400 border-emerald-800 dark:bg-emerald-950",
   },
   MEDIUM: {
     label: "Medium",
-    classes: "text-amber-400 border-amber-800 bg-amber-950",
+    classes: "text-amber-400 border-amber-800 dark:bg-amber-950",
   },
   HARD: { label: "Hard", classes: "text-red-400 border-red-800 bg-red-950" },
 };
@@ -96,6 +98,8 @@ export default function InstructionsPage() {
   const [isRegistered, setIsRegistered] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [showWaitingRoom, setShowWaitingRoom] = useState(false);
+  const [showScheduledModal, setShowScheduledModal] = useState(false);
   const [error, setError] = useState("");
   const hasAutoNavigated = useRef(false);
 
@@ -106,18 +110,19 @@ export default function InstructionsPage() {
     const load = async () => {
       try {
         const res = await api.get(
-          `${API}/challenge/${challengeId}/instructions?session=${sessionId}`);
+          `${API}/challenge/${challengeId}/instructions?session=${sessionId}`,
+        );
         setData(res.data.challenge);
 
         const participantRes = await api
           .get(`${API}/challenge/sessions/${sessionId}/participant`)
           .catch(() => null);
-        console.log(participantRes?.data)
+        console.log(participantRes?.data);
 
-        if(participantRes?.data?.isRegistered) {
+        if (participantRes?.data?.isRegistered) {
           setIsRegistered(true);
         }
-        if(participantRes?.data?.hasSubmitted) {
+        if (participantRes?.data?.hasSubmitted) {
           setIsCompleted(true);
         }
       } catch (e) {
@@ -138,7 +143,8 @@ export default function InstructionsPage() {
       isRegistered
     ) {
       hasAutoNavigated.current = true;
-      router.replace(`/challenges/${challengeId}/attempt?session=${sessionId}`);
+      setShowScheduledModal(true);
+      // router.replace(`/challenges/${challengeId}/attempt?session=${sessionId}`);
     }
   }, [timeToStart, data, isRegistered]);
 
@@ -150,7 +156,7 @@ export default function InstructionsPage() {
       await api.post(`${API}/challenge/sessions/${sessionId}/join`);
 
       if (data?.session.status === "LIVE") {
-        router.push(`/challenges/${challengeId}/attempt?session=${sessionId}`);
+        setIsRegistered(true);
       } else {
         setIsRegistered(true);
       }
@@ -161,6 +167,11 @@ export default function InstructionsPage() {
     }
   };
 
+  const handleStartFromWaitingRoom = () => {
+    setShowScheduledModal(false);
+    setIsRegistered(true);
+    router.push(`/challenges/${challengeId}/attempt?session=${sessionId}`);
+  };
   const handleContinue = () => {
     router.push(`/challenges/${challengeId}/attempt?session=${sessionId}`);
   };
@@ -193,10 +204,10 @@ export default function InstructionsPage() {
   const diff = difficultyConfig[data.difficulty] ?? difficultyConfig.EASY;
 
   return (
-    <div className="min-h-screen bg-[#080a0f] text-slate-100">
-      <div
+    <div className="min-h-screen dark:bg-[#080a0f] text-slate-100">
+      {/* <div
         className={`h-px w-full ${isLive ? "bg-gradient-to-r from-transparent via-emerald-500 to-transparent" : "bg-gradient-to-r from-transparent via-blue-500/40 to-transparent"}`}
-      />
+      /> */}
 
       <div className="max-w-2xl mx-auto px-6 py-10">
         <button
@@ -209,8 +220,8 @@ export default function InstructionsPage() {
         {/* Status pill */}
         <div className="flex items-center gap-3 mb-8">
           {isLive ? (
-            <span className="inline-flex items-center gap-2 text-xs font-mono font-bold px-3 py-1 bg-emerald-950 border border-emerald-800 text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="inline-flex items-center gap-2 text-xs font-mono font-bold px-3 py-1 dark:bg-emerald-950 border border-emerald-800 text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full dark:bg-emerald-400 animate-pulse" />
               LIVE NOW
             </span>
           ) : (
@@ -230,7 +241,7 @@ export default function InstructionsPage() {
         </div>
 
         {/* Challenge title */}
-        <h1 className="text-2xl font-bold text-slate-100 tracking-tight mb-2 leading-snug">
+        <h1 className="text-2xl font-bold text-black dark:text-slate-100 tracking-tight mb-2 leading-snug">
           {data.title}
         </h1>
         {data.description && (
@@ -242,7 +253,7 @@ export default function InstructionsPage() {
         {/* Two column info */}
         <div className="grid grid-cols-2 gap-3 mb-8">
           {/* Company card */}
-          <div className="bg-slate-900/60 border border-slate-800 p-4">
+          <div className="dark:bg-slate-900/60 border border-slate-800 p-4">
             <p className="text-xs font-mono text-slate-600 uppercase tracking-widest mb-3">
               Posted by
             </p>
@@ -251,7 +262,7 @@ export default function InstructionsPage() {
                 <Building2 className="w-4 h-4 text-slate-500" />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-200 leading-tight">
+                <p className="text-sm font-bold text-black dark:text-slate-200 leading-tight">
                   {data.companyName ?? "Company"}
                 </p>
                 <p className="text-xs font-mono text-slate-600 mt-0.5">
@@ -274,7 +285,7 @@ export default function InstructionsPage() {
             </div>
           </div>
 
-          <div className="bg-slate-900/60 border border-slate-800 p-4">
+          <div className="dark:bg-slate-900/60 border border-slate-800 p-4">
             <p className="text-xs font-mono text-slate-600 uppercase tracking-widest mb-3">
               Session
             </p>
@@ -295,12 +306,16 @@ export default function InstructionsPage() {
           </div>
         </div>
 
+        {isLive && !showScheduledModal && (
+          <ParticipantCounter sessionId={sessionId} />
+        )}
+
         <div
           className={`mb-8 p-5 border text-center
           ${
             isLive
-              ? "bg-emerald-950/20 border-emerald-900/40"
-              : "bg-slate-900/40 border-slate-800"
+              ? "dark:bg-emerald-950/20 border-emerald-900/40"
+              : "dark:bg-slate-900/40 border-slate-800"
           }`}
         >
           {isLive ? (
@@ -336,7 +351,7 @@ export default function InstructionsPage() {
           )}
         </div>
 
-        <div className="mb-8 p-5 bg-slate-900/40 border border-slate-800">
+        <div className="mb-8 p-5 dark:bg-slate-900/40 border border-slate-800">
           <div className="flex items-center gap-2 mb-4">
             <Shield className="w-4 h-4 text-slate-500" />
             <p className="text-xs font-mono text-slate-500 uppercase tracking-widest">
@@ -366,7 +381,7 @@ export default function InstructionsPage() {
 
         {!isCompleted && isRegistered && isLive && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 p-4 bg-emerald-950/30 border border-emerald-900/50">
+            <div className="flex items-center gap-3 p-4 dark:bg-emerald-950/30 border border-emerald-900/50">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
               <p className="text-sm font-mono text-emerald-400">
                 You're registered for this challenge
@@ -383,24 +398,24 @@ export default function InstructionsPage() {
 
         {isCompleted && (
           <div className="space-y-4">
-              <div className="flex items-center gap-3 p-4 bg-emerald-950/30 border border-emerald-900/50">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <p className="text-sm font-mono text-emerald-400">
-                  You're completed this challenge
-                </p>
-              </div>
-              <button
-                // onClick={handleContinue}
-                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold tracking-wide transition-colors flex items-center justify-center gap-2"
-              >
-                Your result
-                <ArrowRight className="w-4 h-4" />
-              </button>
+            <div className="flex items-center gap-3 p-4 bg-emerald-950/30 border border-emerald-900/50">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <p className="text-sm font-mono text-emerald-400">
+                You're completed this challenge
+              </p>
+            </div>
+            <button
+              // onClick={handleContinue}
+              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold tracking-wide transition-colors flex items-center justify-center gap-2"
+            >
+              Your result
+              <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
         )}
 
         {!isCompleted && isRegistered && isScheduled && (
-          <div className="flex items-center gap-3 p-4 bg-blue-950/30 border border-blue-900/50">
+          <div className="flex items-center gap-3 p-4 dark:bg-blue-950/30 border border-blue-900/50">
             <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
             <div>
               <p className="text-sm font-mono text-blue-400">
@@ -498,6 +513,13 @@ export default function InstructionsPage() {
           </div>
         )}
       </div>
+      {showScheduledModal && data.session.status === "SCHEDULED" && (
+        <WaitingRoom
+          sessionId={sessionId}
+          challengeId={challengeId}
+          onStartChallenge={handleStartFromWaitingRoom}
+        />
+      )}
     </div>
   );
 }

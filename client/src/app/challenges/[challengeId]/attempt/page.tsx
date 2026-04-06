@@ -381,28 +381,6 @@ export default function Attempt() {
       </div>
 
       <div className="flex-1 min-w-0 h-full overflow-hidden">
-        {/* Top bar of attempt page */}
-        <div className="flex items-center justify-between px-6 py-2 border-b border-slate-800">
-          <div className="flex items-center gap-4">
-            {/* Live indicator */}
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-mono text-emerald-400 font-medium">
-                LIVE
-              </span>
-            </div>
-            {participantCount !== null && (
-              <span className="text-xs font-mono text-slate-500">
-                {participantCount} participating
-              </span>
-            )}
-          </div>
-
-          {/* Timer on the right
-          <div className="text-xs font-mono font-bold tabular-nums text-slate-300">
-            {formatMs(timeToEnd)}
-          </div> */}
-        </div>
         <SandpackProvider theme="dark" template="react">
           <SandpackLayout
             style={{

@@ -186,14 +186,7 @@ export default function CreateChallengeForm() {
 
   return (
     <div className="min-h-screen">
-      <Tabs defaultValue="create" className="w-full">
-        <TabsList className="w-[300px]">
-          <TabsTrigger value="create">Create</TabsTrigger>
-          <TabsTrigger value="view">View</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="create" className="w-full">
-          <Card className="bg-slate-950/60 backdrop-blur">
+          <Card className="dark:bg-slate-950/60 backdrop-blur">
             <CardHeader>
               <CardTitle className="text-2xl">Create Challenge</CardTitle>
               <CardDescription>
@@ -213,7 +206,7 @@ export default function CreateChallengeForm() {
                         <FormControl>
                           <Input
                             placeholder="e.g., Build a Todo App"
-                            className="bg-slate-900/50 border-purple-500/30"
+                            className="dark:bg-slate-900/50 border-purple-500/30"
                             {...field}
                           />
                         </FormControl>
@@ -231,7 +224,7 @@ export default function CreateChallengeForm() {
                         <FormControl>
                           <Textarea
                             placeholder="Brief overview of the challenge"
-                            className="bg-slate-900/50 border-purple-500/30"
+                            className="dark:dark:bg-slate-900/50 border-purple-500/30"
                             {...field}
                           />
                         </FormControl>
@@ -249,7 +242,7 @@ export default function CreateChallengeForm() {
                           <FormLabel>Difficulty</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger className="bg-slate-900/50 border-purple-500/30 w-full">
+                              <SelectTrigger className="dark:dark:bg-slate-900/50 border-purple-500/30 w-full">
                                 <SelectValue />
                               </SelectTrigger>
                             </FormControl>
@@ -272,7 +265,7 @@ export default function CreateChallengeForm() {
                           <FormLabel>Challenge Type</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger className="w-full bg-slate-900/50 border-purple-500/30">
+                              <SelectTrigger className="w-full dark:dark:bg-slate-900/50 border-purple-500/30">
                                 <SelectValue />
                               </SelectTrigger>
                             </FormControl>
@@ -303,7 +296,7 @@ export default function CreateChallengeForm() {
                             <FormControl>
                               <Textarea
                                 placeholder="Detailed task for the user"
-                                className="bg-slate-900/50 border-purple-500/30 min-h-24"
+                                className="dark:dark:bg-slate-900/50 border-purple-500/30 min-h-24"
                                 {...field}
                               />
                             </FormControl>
@@ -322,7 +315,7 @@ export default function CreateChallengeForm() {
                             <FormControl>
                               <Textarea
                                 placeholder="How should users submit their solution?"
-                                className="bg-slate-900/50 border-purple-500/30 min-h-20"
+                                className="dark:dark:bg-slate-900/50 border-purple-500/30 min-h-20"
                                 {...field}
                               />
                             </FormControl>
@@ -341,7 +334,7 @@ export default function CreateChallengeForm() {
                             <FormControl>
                               <Textarea
                                 placeholder="List required features"
-                                className="bg-slate-900/50 border-purple-500/30"
+                                className="dark:dark:bg-slate-900/50 border-purple-500/30"
                                 {...field}
                               />
                             </FormControl>
@@ -363,7 +356,7 @@ export default function CreateChallengeForm() {
                             <FormControl>
                               <Textarea
                                 placeholder="Nice-to-have features"
-                                className="bg-slate-900/50 border-purple-500/30"
+                                className="dark:dark:bg-slate-900/50 border-purple-500/30"
                                 {...field}
                               />
                             </FormControl>
@@ -382,7 +375,7 @@ export default function CreateChallengeForm() {
                             <FormControl>
                               <Textarea
                                 placeholder="API endpoints and structure"
-                                className="bg-slate-900/50 border-purple-500/30"
+                                className="dark:dark:bg-slate-900/50 border-purple-500/30"
                                 {...field}
                               />
                             </FormControl>
@@ -407,7 +400,7 @@ export default function CreateChallengeForm() {
                           className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed cursor-pointer transition-colors
                             ${designImages.length >= 5 || uploading
                               ? "border-slate-800 bg-slate-900/20 cursor-not-allowed opacity-50"
-                              : "border-purple-500/30 bg-slate-900/50 hover:border-purple-500/60 hover:bg-slate-900/80"
+                              : "border-purple-500/30 dark:dark:bg-slate-900/50 hover:border-purple-500/60 hover:bg-slate-900/80"
                             }`}
                         >
                           <div className="flex flex-col items-center gap-2 pointer-events-none">
@@ -483,7 +476,7 @@ export default function CreateChallengeForm() {
                             <FormControl>
                               <Textarea
                                 placeholder="Any restrictions (no libraries, must use X framework, etc.)"
-                                className="bg-slate-900/50 border-purple-500/30"
+                                className="dark:dark:bg-slate-900/50 border-purple-500/30"
                                 {...field}
                               />
                             </FormControl>
@@ -502,7 +495,7 @@ export default function CreateChallengeForm() {
                             <FormControl>
                               <Textarea
                                 placeholder="Initial code template"
-                                className="bg-slate-900/50 border-purple-500/30 font-mono text-sm min-h-24"
+                                className="dark:dark:bg-slate-900/50 border-purple-500/30 font-mono text-sm min-h-24"
                                 {...field}
                               />
                             </FormControl>
@@ -521,7 +514,7 @@ export default function CreateChallengeForm() {
                             <FormControl>
                               <Textarea
                                 placeholder="Reference solution (for grading)"
-                                className="bg-slate-900/50 border-purple-500/30 font-mono text-sm min-h-24"
+                                className="dark:dark:bg-slate-900/50 border-purple-500/30 font-mono text-sm min-h-24"
                                 {...field}
                               />
                             </FormControl>
@@ -540,7 +533,7 @@ export default function CreateChallengeForm() {
                             <FormControl>
                               <Input
                                 placeholder="e.g., React, Vue, Svelte (comma-separated)"
-                                className="bg-slate-900/50 border-purple-500/30"
+                                className="dark:bg-slate-900/50 border-purple-500/30"
                                 {...field}
                               />
                             </FormControl>
@@ -565,8 +558,6 @@ export default function CreateChallengeForm() {
               </Form>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
 
       <ChallengeSuccessModal
         challengeId={challengeId}

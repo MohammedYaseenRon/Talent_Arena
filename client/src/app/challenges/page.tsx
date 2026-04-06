@@ -132,8 +132,6 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
       router.push(
         `/challenges/${challenge.challengeId}/instructions?session=${challenge.sessionId}`,
       );
-    } else if (challenge.status === "ENDED") {
-      router.push(`/challenges/${challenge.challengeId}/results`);
     }
   };
 
@@ -196,8 +194,8 @@ function ChallengeCard({ challenge }: { challenge: Challenge }) {
               className={`text-base font-bold mb-1.5 leading-snug transition-colors
                 ${
                   challenge.status === "LIVE"
-                    ? "text-slate-100 group-hover:text-emerald-300"
-                    : "text-slate-100 group-hover:text-white"
+                    ? "text-black dark:text-slate-100 group-hover:text-emerald-300"
+                    : "text-slate-300 group-hover:text-white"
                 }`}
             >
               {challenge.title}

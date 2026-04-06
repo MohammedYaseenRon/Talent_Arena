@@ -188,7 +188,7 @@ export default function RecruiterDashboard() {
           </button>
         </div>
 
-        {d.live.length > 0 && (
+        {d.counts.LIVE > 0 && (
           <div
             onClick={() => router.push("/recruiter/live")}
             className="flex items-center justify-between px-4 py-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 rounded-xl cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-950/60 transition-colors group"
@@ -199,7 +199,7 @@ export default function RecruiterDashboard() {
                 className="text-emerald-500 dark:text-emerald-400 animate-pulse"
               />
               <span className="text-sm font-mono text-emerald-600 dark:text-emerald-400 font-medium">
-                {d.live.length} challenge{d.live.length > 1 ? "s" : ""} live
+                {d.counts.LIVE} challenge{d.counts.LIVE > 1 ? "s" : ""} live
                 right now
               </span>
             </div>

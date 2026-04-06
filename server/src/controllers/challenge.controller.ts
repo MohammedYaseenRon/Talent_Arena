@@ -1136,3 +1136,24 @@ export const getAllChallengeSubmissions = async (
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const getSessionParticipantsCount = async (req: Request, res: Response) => {
+  const { sessionId } = req.params as {
+    sessionId: string
+  }
+  if (!sessionId) {
+    return res.status(400).json({ error: "sessionId is required" });
+  }
+
+  const result = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(sessionParticipants)
+    .where(
+      and(
+        eq(sessionParticipants.sessionId, sessionId),
+        isNotNull(sessionParticipants.startedAt)
+      )
+    );
+
+  res.status(200).json({ participantCount: result[0]?.count ?? 0 });
+};
