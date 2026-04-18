@@ -15,5 +15,6 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true
   },
-  "include": [".", "src", "types"]
+  "include": ["src", "types"],
+  "exclude": ["drizzle.config.ts", "node_modules"]
 }
