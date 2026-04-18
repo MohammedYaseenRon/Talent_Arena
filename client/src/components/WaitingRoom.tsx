@@ -99,7 +99,7 @@ export default function WaitingRoom({
         {/* Button */}
         <button
           onClick={onStartChallenge}
-          className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold tracking-wide transition-colors rounded-lg mb-3"
+          className="w-full py-3  bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold tracking-wide transition-colors rounded-lg mb-3"
         >
           Go to Challenge
         </button>
