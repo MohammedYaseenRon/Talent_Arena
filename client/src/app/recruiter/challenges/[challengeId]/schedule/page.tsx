@@ -22,7 +22,6 @@ interface Session {
   status: "SCHEDULED" | "LIVE" | "ENDED";
 }
 
-// ─── Duration presets ─────────────────────────────────────────────────────────
 
 const DURATION_PRESETS = [
   { label: "30 min",  minutes: 30 },
@@ -92,8 +91,8 @@ export default function ScheduleSessionPage() {
     const load = async () => {
       try {
         const [challengeRes, sessionsRes] = await Promise.all([
-          api.get(`http://localhost:4000/challenge/${challengeId}`, { withCredentials: true }),
-          api.get(`http://localhost:4000/challenge/${challengeId}/sessions`, { withCredentials: true }),
+          api.get(`${process.env.NEXT_PUBLIC_API_URL}/challenge/${challengeId}`, { withCredentials: true }),
+          api.get(`${process.env.NEXT_PUBLIC_API_URL}/challenge/${challengeId}/sessions`, { withCredentials: true }),
         ]);
         setChallenge(challengeRes.data.challenge);
         setSessions(sessionsRes.data.sessions ?? []);
@@ -132,8 +131,8 @@ export default function ScheduleSessionPage() {
     }
     setSubmitting(true);
     try {
-      await axios.post(
-        `http://localhost:4000/challenge/${challengeId}/sessions`,
+      await api.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/challenge/${challengeId}/sessions`,
         {
           startTime: new Date(startTime).toISOString(),
           endTime: new Date(endTime).toISOString(),

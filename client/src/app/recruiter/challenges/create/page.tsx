@@ -160,7 +160,7 @@ export default function CreateChallengeForm() {
       }
 
       const response = await api.post(
-        "http://localhost:4000/challenge",
+        `${process.env.NEXT_PUBLIC_API_URL}/challenge`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
