@@ -17,7 +17,6 @@ function SubmitBtn({
   const { sandpack } = useSandpack();
   const { files } = sandpack;
   const [showConfirm, setShowConfirm] = useState(false);
-  const API = process.env.NEXT_PUBLIC_API_URL;
   const router = useRouter();
 
   const { status, submit } = useSubmitChallenge(challengeId, sessionId);

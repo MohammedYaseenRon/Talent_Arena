@@ -267,7 +267,7 @@ export default function Attempt() {
   const load = async () => {
     try {
       const res = await api.get(
-        `${API}/challenge/${challengeId}/attempt-data?session=${sessionId}`,
+        `$/challenge/${challengeId}/attempt-data?session=${sessionId}`,
       );
       setChallengeDetail(res.data.challenge);
       setSession(res.data.session);

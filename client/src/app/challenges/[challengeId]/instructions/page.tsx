@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import axios from "axios";
 import Link from "next/link";
 import {
   Building2,
@@ -19,7 +18,6 @@ import api from "@/lib/axios";
 import WaitingRoom from "@/components/WaitingRoom";
 import ParticipantCounter from "@/components/ParticipantCounter";
 
-const API = process.env.NEXT_PUBLIC_API_URL;
 
 interface InstructionData {
   challengeId: string;
@@ -110,12 +108,12 @@ export default function InstructionsPage() {
     const load = async () => {
       try {
         const res = await api.get(
-          `${API}/challenge/${challengeId}/instructions?session=${sessionId}`,
+          `/challenge/${challengeId}/instructions?session=${sessionId}`,
         );
         setData(res.data.challenge);
 
         const participantRes = await api
-          .get(`${API}/challenge/sessions/${sessionId}/participant`)
+          .get(`/challenge/sessions/${sessionId}/participant`)
           .catch(() => null);
         console.log(participantRes?.data);
 
@@ -153,7 +151,7 @@ export default function InstructionsPage() {
     setRegistering(true);
     setError("");
     try {
-      await api.post(`${API}/challenge/sessions/${sessionId}/join`);
+      await api.post(`/challenge/sessions/${sessionId}/join`);
 
       if (data?.session.status === "LIVE") {
         setIsRegistered(true);

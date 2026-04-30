@@ -26,7 +26,7 @@ type RecruiterRegisterInput = {
     email: string,
     password: string
     companyName: string,
-    desigNation: string,
+    designation: string,
     companyWebsite: string
 }
 
@@ -43,8 +43,7 @@ type AuthContextValue = {
     refresh: () => Promise<void>;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-
+console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider = ({children} : {children: React.ReactNode}) => {
@@ -54,7 +53,7 @@ export const AuthProvider = ({children} : {children: React.ReactNode}) => {
 
     const fetchMe = async () => {
         try {
-            const res = await api.get(`${API_BASE}/auth/me`, {
+            const res = await api.get(`/auth/me`, {
                 withCredentials: true,
             });
             setUser(res.data.user ?? null);
@@ -68,7 +67,7 @@ export const AuthProvider = ({children} : {children: React.ReactNode}) => {
     const login = async (email: string, password: string) => {
         try {
         const res = await api.post(
-            `${API_BASE}/auth/login`,
+            `/auth/login`,
             {email, password},
             { withCredentials: true },
         );
@@ -85,7 +84,7 @@ export const AuthProvider = ({children} : {children: React.ReactNode}) => {
     const register = async (input: RegisterInput) => {
         try {
         const res = await api.post(
-            `${API_BASE}/auth/register`,
+            `/auth/register`,
             input,
             { withCredentials: true },
         );
@@ -100,7 +99,7 @@ export const AuthProvider = ({children} : {children: React.ReactNode}) => {
     const recruiterRegister = async (input: RecruiterRegisterInput) => {
         try {
         const res = await api.post(
-            `${API_BASE}/auth/recruiter/register`,
+            `/auth/recruiter/register`,
             input,
             { withCredentials: true },
         );
@@ -116,7 +115,7 @@ export const AuthProvider = ({children} : {children: React.ReactNode}) => {
     const logout = async () => {
         try {
         await axios.post(
-            `${API_BASE}/auth/logout`,
+            `/auth/logout`,
             {},
             { withCredentials: true },
         );

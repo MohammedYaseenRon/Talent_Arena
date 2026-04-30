@@ -29,13 +29,12 @@ export default function CodeReviewPage() {
   const [aiPanelCollapsed, setAiPanelCollapsed] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [editorFlex, setEditorFlex] = useState(50); 
-  const API = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
     const load = async () => {
       try {
         const res = await api.get(
-          `${API}/submission/${challengeId}/submissions/${userId}?session=${sessionId}`
+          `/submission/${challengeId}/submissions/${userId}?session=${sessionId}`
         );
         setData(res.data);
       } catch (err: any) {

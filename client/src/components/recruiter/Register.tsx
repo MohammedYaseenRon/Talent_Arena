@@ -14,7 +14,7 @@ interface FormData {
     password: string,
     confirmPassword: string,
     companyName: string,
-    desigNation?: string,
+    designation?: string,
     companyWebsite?: string
 }
 
@@ -26,7 +26,7 @@ export default function Register() {
     password: "",
     confirmPassword: "",
     companyName: "",
-    desigNation: "",
+    designation: "",
     companyWebsite: "",
   });
   const [error, setError] = useState("");
@@ -55,7 +55,7 @@ export default function Register() {
         email: formData.email,
         password: formData.password,
         companyName: formData.companyName,
-        desigNation: formData.desigNation || "",
+        designation: formData.designation || "",
         companyWebsite: formData.companyWebsite || ""
       });
       router.push("/recruiter");
@@ -239,9 +239,9 @@ export default function Register() {
                 <Input
                   type="text"
                   placeholder="Enter your Designation"
-                  value={formData.desigNation}
+                  value={formData.designation}
                   onChange={(e) =>
-                    setFormData({ ...formData, desigNation: e.target.value })
+                    setFormData({ ...formData, designation: e.target.value })
                   }
                   required
                   className="bg-slate-900/50 border-purple-500/30 focus:border-purple-500 text-white placeholder:text-slate-500 h-11 font-mono"

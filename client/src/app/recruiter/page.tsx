@@ -19,7 +19,6 @@ import {
 import StatsCard from "@/components/recruiter/StatsCard";
 import { Difficulty } from "@/types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const difficultyStyles: Record<Difficulty, string> = {
   EASY: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-900",
@@ -119,7 +118,7 @@ export default function RecruiterDashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await api.get(`${API_URL}/submission/dashboard`);
+        const res = await api.get(`/submission/dashboard`);
         setDashData(res.data);
       } catch (err: any) {
         if (err?.response?.status === 401) router.replace("/recruiter/login");

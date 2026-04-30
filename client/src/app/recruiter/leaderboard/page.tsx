@@ -273,7 +273,7 @@ export default function LeaderboardPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await api.get(`${API_URL}/challenge/submissions/all`);
+      const res = await api.get(`/challenge/submissions/all`);
       const data: ChallengeResult[] = (res.data.challenges ?? []).filter((c: ChallengeResult) => c.sessionStatus !== "SCHEDULED");
       setChallenges(data);
       if (data.length > 0 && !hasInitializedRef.current) {

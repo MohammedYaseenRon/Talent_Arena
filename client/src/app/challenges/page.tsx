@@ -413,7 +413,7 @@ const ChallengesPage = () => {
 
   return (
     <div className="min-h-screen dark:bg-slate-950 text-slate-100">
-      <div className="w-full h-16 flex items-center justify-between px-12">
+      <div className="w-full h-16 flex items-center justify-between gap-6 px-3 lg:px-12 border-b">
         <h2 className="font-mono font-bold text-black dark:text-white text-lg lg:text-xl">
           Talent_Arena
         </h2>
@@ -423,7 +423,7 @@ const ChallengesPage = () => {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="w-full border border-slate-200 dark:border-gray-700 flex items-center gap-3 px-3 py-1.5 h-auto justify-start hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="w-full border border-slate-200 dark:border-gray-700 flex items-center gap-3 px-3 py-1 h-auto justify-start hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                   <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-black flex items-center justify-center shrink-0">
                     <Avatar>
@@ -440,18 +440,16 @@ const ChallengesPage = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-52 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
+                className="w-56 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 p-1"
                 align="end"
                 side="bottom"
               >
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="text-red-500 focus:text-red-500 focus:bg-red-500/10 cursor-pointer"
+                  className="text-red-600 dark:text-red-400 focus:text-red-700 dark:focus:text-red-300 focus:bg-red-50 dark:focus:bg-red-950/50 cursor-pointer flex items-center gap-2 px-2 py-2 rounded-md transition-colors"
                 >
-                  <span>Log out</span>
-                  <DropdownMenuShortcut>
-                    <LogOut />
-                  </DropdownMenuShortcut>
+                  <LogOut className="h-4 w-4" />
+                  <span className="font-medium">Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -486,83 +484,90 @@ const ChallengesPage = () => {
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-3 mb-8 flex-wrap">
-          <Select
-            value={selectedStatus}
-            onValueChange={(v) => setSelectedStatus(v as Status)}
-          >
-            <SelectTrigger className="w-36 dark:bg-slate-900 border-slate-800 text-slate-500 text-xs font-mono">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="All">
-                  <div className="flex items-center gap-2">
-                    <Radio className="h-4 w-4" />
-                    <span>All Status</span>
-                  </div>
-                </SelectItem>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-8 w-full">
+          <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 w-full sm:w-auto">
+            <Select
+              value={selectedStatus}
+              onValueChange={(v) => setSelectedStatus(v as Status)}
+            >
+              <SelectTrigger className="w-full sm:w-36 dark:bg-slate-900 border-slate-800 text-slate-500 text-xs font-mono">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="All">
+                    <div className="flex items-center gap-2">
+                      <Radio className="h-4 w-4" />
+                      <span>All Status</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="LIVE">
+                    <div className="flex items-center gap-2">
+                      <Radio className="h-4 w-4 text-red-500" />
+                      <span>Live</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="SCHEDULED">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-blue-500" />
+                      <span>Upcoming</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="ENDED">
+                    <div className="flex items-center gap-2">
+                      <Flag className="h-4 w-4 text-gray-500" />
+                      <span>Ended</span>
+                    </div>
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
 
-                <SelectItem value="LIVE">
-                  <div className="flex items-center gap-2">
-                    <Radio className="h-4 w-4 text-red-500" />
-                    <span>Live</span>
-                  </div>
-                </SelectItem>
+            <Select
+              value={selectedDifficulty}
+              onValueChange={(v) => setSelectedDifficulty(v as Difficulty)}
+            >
+              <SelectTrigger className="w-full sm:w-36 dark:bg-slate-900 border-slate-800 text-slate-500 text-xs font-mono">
+                <SelectValue placeholder="Difficulty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="All">All Levels</SelectItem>
+                  <SelectItem value="EASY">Easy</SelectItem>
+                  <SelectItem value="MEDIUM">Medium</SelectItem>
+                  <SelectItem value="HARD">Hard</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
 
-                <SelectItem value="SCHEDULED">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-blue-500" />
-                    <span>Upcoming</span>
-                  </div>
-                </SelectItem>
+            <Select
+              value={selectedType}
+              onValueChange={(v) => setSelectedType(v as ChallengeType)}
+            >
+              <SelectTrigger className="w-full sm:w-40 dark:bg-slate-900 border-slate-800 text-slate-500 text-xs font-mono">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="All">All Types</SelectItem>
+                  <SelectItem value="FRONTEND">Frontend</SelectItem>
+                  <SelectItem value="BACKEND">Backend</SelectItem>
+                  <SelectItem value="DSA">DSA</SelectItem>
+                  <SelectItem value="SYSTEM_DESIGN">System Design</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
 
-                <SelectItem value="ENDED">
-                  <div className="flex items-center gap-2">
-                    <Flag className="h-4 w-4 text-gray-500" />
-                    <span>Ended</span>
-                  </div>
-                </SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+            <div className="flex items-center justify-end sm:hidden">
+              <span className="text-xs font-mono text-slate-600">
+                {isStatusFiltered ? flatFiltered.length : allChallenges.length}{" "}
+                results
+              </span>
+            </div>
+          </div>
 
-          <Select
-            value={selectedDifficulty}
-            onValueChange={(v) => setSelectedDifficulty(v as Difficulty)}
-          >
-            <SelectTrigger className="w-36 dark:bg-slate-900 border-slate-800 text-slate-500 text-xs font-mono">
-              <SelectValue placeholder="Difficulty" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="All">All Levels</SelectItem>
-                <SelectItem value="EASY">Easy</SelectItem>
-                <SelectItem value="MEDIUM">Medium</SelectItem>
-                <SelectItem value="HARD">Hard</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={selectedType}
-            onValueChange={(v) => setSelectedType(v as ChallengeType)}
-          >
-            <SelectTrigger className="w-40 dark:bg-slate-900 border-slate-800 text-slate-500 text-xs font-mono">
-              <SelectValue placeholder="Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="All">All Types</SelectItem>
-                <SelectItem value="FRONTEND">Frontend</SelectItem>
-                <SelectItem value="BACKEND">Backend</SelectItem>
-                <SelectItem value="DSA">DSA</SelectItem>
-                <SelectItem value="SYSTEM_DESIGN">System Design</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-
-          <span className="ml-auto text-xs font-mono text-slate-600">
+          {/* Results count on desktop only — pushed to far right */}
+          <span className="hidden sm:block text-xs font-mono text-slate-600 sm:ml-auto">
             {isStatusFiltered ? flatFiltered.length : allChallenges.length}{" "}
             results
           </span>

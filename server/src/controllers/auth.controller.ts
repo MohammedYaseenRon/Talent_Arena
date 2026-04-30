@@ -78,7 +78,7 @@ export const registration = async (req: Request, res: Response) => {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ← ADD THIS
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 15 * 60 * 1000,
       path: "/",
     });
@@ -86,7 +86,7 @@ export const registration = async (req: Request, res: Response) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ← ADD THIS
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/",
     });
@@ -175,7 +175,7 @@ export const recruiterRegistration = async (req: Request, res: Response) => {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ← ADD THIS
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 15 * 60 * 1000,
       path: "/",
     });
@@ -183,7 +183,7 @@ export const recruiterRegistration = async (req: Request, res: Response) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ← ADD THIS
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/",
     });
@@ -207,7 +207,6 @@ export const recruiterRegistration = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
-
 
 export const listRecruiterProfiles = async (req: Request, res: Response) => {
   try {
@@ -257,7 +256,7 @@ export const login = async (req: Request, res: Response) => {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ← ADD THIS
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 15 * 60 * 1000,
       path: "/",
     });
@@ -265,7 +264,7 @@ export const login = async (req: Request, res: Response) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ← ADD THIS
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/",
     });
@@ -276,7 +275,7 @@ export const login = async (req: Request, res: Response) => {
         id: user.id,
         email: user.email,
         role: user.role,
-        name: user.name
+        name: user.name,
       },
     });
   } catch (error) {
@@ -296,7 +295,7 @@ export const logout = async (req: Request, res: Response) => {
 
     res.clearCookie("refreshToken", {
       httpOnly: true,
-      sameSite: "strict",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/api/auth",
     });
@@ -308,35 +307,32 @@ export const logout = async (req: Request, res: Response) => {
   }
 };
 
-export const getAuthMe = async(req: Request, res: Response) => {
+export const getAuthMe = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
 
-    if(!userId) {
-      return res.status(401).json({error: "Unauthorized"});
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
     const [user] = await db
-    .select({
-      id: users.id,
-      name: users.name,
-      email: users.email ,
-      role: users.role
-    })
-    .from(users)
-    .where(eq(users.id, userId))
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+      })
+      .from(users)
+      .where(eq(users.id, userId));
 
-    if(!user) {
-      return res.status(404).json({error : "User not found"});
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
 
-    return res.status(200).json({message : "User found", user});
-  }catch(error) {
-    return res.status(500).json({error: "Internal server error"});
+    return res.status(200).json({ message: "User found", user });
+  } catch (error) {
+    return res.status(500).json({ error: "Internal server error" });
   }
-
-
-}
- 
+};
 
 export const refreshTokenHandler = async (req: Request, res: Response) => {
   try {
@@ -362,7 +358,9 @@ export const refreshTokenHandler = async (req: Request, res: Response) => {
       .where(eq(refreshTokens.token, token));
 
     if (!tokenRecord || tokenRecord.expiresAt < new Date()) {
-      return res.status(401).json({ error: "Invalid or expired refresh token" });
+      return res
+        .status(401)
+        .json({ error: "Invalid or expired refresh token" });
     }
 
     const newAccessToken = generateAccessToken(

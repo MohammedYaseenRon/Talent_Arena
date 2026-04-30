@@ -33,7 +33,6 @@ import toast from "react-hot-toast";
 import api from "@/lib/axios";
 import { ImagePlus, X, ArrowLeft, Loader2 } from "lucide-react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface FrontendDetails {
   taskDescription: string;
@@ -97,7 +96,7 @@ export default function EditChallengePage() {
   useEffect(() => {
     const fetchChallenge = async () => {
       try {
-        const res = await api.get(`${API_URL}/challenge/${challengeId}`);
+        const res = await api.get(`/challenge/${challengeId}`);
         const ch = res.data.challenge;
         const frontend = res.data.frontendDetails;
 
@@ -217,7 +216,7 @@ export default function EditChallengePage() {
         });
       }
 
-      await api.patch(`${API_URL}/challenge/${challengeId}`, formData, {
+      await api.patch(`/challenge/${challengeId}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
